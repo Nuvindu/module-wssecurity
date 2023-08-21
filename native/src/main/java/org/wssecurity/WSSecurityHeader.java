@@ -20,14 +20,22 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.message.WSSecHeader;
+import org.w3c.dom.Document;
 
 public class WSSecurityHeader {
     private final WSSecHeader wsSecHeader;
+
+    private final Document document;
 
     public WSSecurityHeader(BObject documentBuilder) {
         BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
         DocBuilder docBuilder = (DocBuilder) handle.getValue();
         this.wsSecHeader = new WSSecHeader(docBuilder.getNativeDocument());
+        this.document = docBuilder.getNativeDocument();
+    }
+
+    protected Document getDocument() {
+        return document;
     }
 
     protected WSSecHeader getWsSecHeader() {

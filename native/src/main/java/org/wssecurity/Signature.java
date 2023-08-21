@@ -16,10 +16,10 @@
 package org.wssecurity;
 
 import org.apache.wss4j.common.WSEncryptionPart;
-import org.apache.wss4j.common.crypto.CryptoFactory;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.common.util.UsernameTokenUtil;
 import org.apache.wss4j.dom.WSConstants;
+import org.apache.wss4j.dom.WSDocInfo;
 import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecSignature;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
@@ -29,16 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
-import javax.xml.crypto.dsig.SignatureMethod;
 
 public class Signature {
-    private final UsernameToken usernameToken;
 
-    public Signature(UsernameToken usernameToken) {
-        this.usernameToken = usernameToken;
-    }
-
-    public Document buildSignature(RequestData reqData, WSSecSignature sign, byte[] key) throws WSSecurityException {
+    public void buildSignature(RequestData reqData, WSSecSignature sign, byte[] key) throws WSSecurityException {
         List<WSEncryptionPart> parts = null;
         parts = new ArrayList<>(1);
         Document doc = reqData.getSecHeader().getSecurityHeaderElement().getOwnerDocument();
@@ -46,23 +40,26 @@ public class Signature {
         List<Reference> referenceList = sign.addReferencesToSign(parts);
         sign.computeSignature(referenceList);
         reqData.getSignatureValues().add(sign.getSignatureValue());
-        return usernameToken.getUsernameToken().build(key);
     }
 
     public WSSecSignature prepareSignature(RequestData reqData,
                                            UsernameToken usernameToken) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-
         byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
         sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
         sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
         sign.setSecretKey(usernameToken.getUsernameToken().getDerivedKey(salt));
-        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
-        sign.setSignatureAlgorithm(SignatureMethod.HMAC_SHA1);
+        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
+        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
+//        sign.setX509Certificate(usernameToken.getX509Certificate());
+//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
+//        TODO - Add support for different signature methods
+        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
         sign.setUserInfo("wss40", "security");
-        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
+//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
+        sign.prepare(usernameToken.getCryptoProperties());
         return sign;
     }
 }

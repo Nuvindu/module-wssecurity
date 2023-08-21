@@ -20,6 +20,7 @@ import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
+import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.common.util.UsernameTokenUtil;
 import org.apache.wss4j.dom.WSConstants;
@@ -42,6 +43,12 @@ public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
     private final Signature signature;
+    private final Document document;
+    private X509SecToken x509SecToken = null;
+
+    protected Document getDocument() {
+        return document;
+    }
 
     protected Signature getSignature() {
         return signature;
@@ -51,11 +58,32 @@ public class UsernameToken {
         BHandle handle = (BHandle) wsSecurityHeader.get(StringUtils.fromString("nativeSecHeader"));
         WSSecurityHeader securityHeader = (WSSecurityHeader) handle.getValue();
         this.usernameToken = new WSSecUsernameToken(securityHeader.getWsSecHeader());
-        this.signature = new Signature(this);
+        this.signature = new Signature();
+        this.document = securityHeader.getDocument();
     }
 
     protected WSSecUsernameToken getUsernameToken() {
         return usernameToken;
+    }
+
+//    protected X509Certificate getX509Certificate() {
+//        return (x509SecToken == null) ? null : x509SecToken.getX509Certificate();
+//    }
+//
+//    protected String getSignatureAlgorithm() {
+//        return (x509SecToken == null) ? SignatureMethod.HMAC_SHA1 : x509SecToken.getSignatureAlgoName();
+//    }
+
+    protected void setX509Token(X509SecToken x509SecToken) {
+        this.x509SecToken =  x509SecToken;
+    }
+
+    protected int getKeyIdentifierType() {
+        return (x509SecToken == null) ? WSConstants.CUSTOM_SYMM_SIGNING : WSConstants.X509_KEY_IDENTIFIER;
+    }
+
+    protected Crypto getCryptoProperties() {
+        return (x509SecToken == null) ? null : x509SecToken.getCryptoProperties();
     }
 
     public static Object buildToken(BObject userToken, BString username, BString password,
@@ -88,12 +116,12 @@ public class UsernameToken {
     }
 
     public static Document encryptEnv(WSSecUsernameToken usernameToken) throws WSSecurityException {
-            WSSecDKEncrypt encrBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
-            encrBuilder.setSymmetricEncAlgorithm(WSConstants.AES_128);
-            encrBuilder.setTokenIdentifier(usernameToken.getId());
-            encrBuilder.setCustomValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
+            WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
+            encryptionBuilder.setSymmetricEncAlgorithm(WSConstants.AES_128);
+            encryptionBuilder.setTokenIdentifier(usernameToken.getId());
+            encryptionBuilder.setCustomValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
             usernameToken.addDerivedKey(Constants.ITERATION);
-            Document encryptedDoc = encrBuilder.build("http://www.w3.org/2001/04/xmlenc#aes128-cbc"
+            Document encryptedDoc = encryptionBuilder.build("http://www.w3.org/2001/04/xmlenc#aes128-cbc"
                     .getBytes(StandardCharsets.UTF_8));
             usernameToken.prependToHeader();
             return encryptedDoc;
@@ -110,9 +138,9 @@ public class UsernameToken {
         setConfigs(usernameToken, passwordType, username, password);
         usernameToken.addDerivedKey(Constants.ITERATION);
         usernameToken.prepare(salt);
-        return usernameTokenObj.getSignature().buildSignature(reqData,
-                usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj),
-                UsernameTokenUtil.generateSalt(true));
+        usernameTokenObj.getSignature().buildSignature(reqData,
+                usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj), salt);
+        return usernameToken.build(salt);
     }
 
     public static Document buildDocument(WSSecUsernameToken usernameToken, String passwordType) {
