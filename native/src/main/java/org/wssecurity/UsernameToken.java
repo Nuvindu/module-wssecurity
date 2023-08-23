@@ -91,26 +91,25 @@ public class UsernameToken {
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         byte[] salt = UsernameTokenUtil.generateSalt(true);
         try {
+            Document doc;
             if (pwType.getValue().equals(Constants.SIGNATURE)) {
-                Document doc = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                                                     pwType.getValue(), salt, null);
-                return StringUtils.fromString(convertDocumentToString(doc));
+                doc = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
+                                            pwType.getValue(), salt, null);
             } else if (pwType.getValue().equals(Constants.ENCRYPT)) {
                 setConfigs(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
                 buildDocument(usernameToken, pwType.getValue());
                 Encryption encryption = (new Encryption(WSConstants.AES_128));
-                Document doc = encryption.encryptEnv(usernameToken, salt);
-                return StringUtils.fromString(convertDocumentToString(doc));
+                doc = encryption.encryptEnv(usernameToken, salt);
             } else if (pwType.getValue().equals(Constants.SIGN_AND_ENCRYPT)) {
                 addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                                      pwType.getValue(), salt, null);
+                        pwType.getValue(), salt, null);
                 Encryption encryption = (new Encryption(WSConstants.AES_128));
-                Document doc = encryption.encryptEnv(usernameToken, salt);
-//                Document doc = encryption.encryptWithSymmetricKey(usernameTokenObj, salt);
-                return StringUtils.fromString(convertDocumentToString(doc));
+                doc = encryption.encryptEnv(usernameToken, salt);
+            } else {
+                setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
+                doc = buildDocument(usernameToken, pwType.getValue());
             }
-            setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
-            return StringUtils.fromString(convertDocumentToString(buildDocument(usernameToken, pwType.getValue())));
+            return StringUtils.fromString(convertDocumentToString(doc));
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

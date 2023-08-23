@@ -25,4 +25,8 @@ public class Constants {
 
     public static final String ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT";
 
+    public static final String NATIVE_SEC_HEADER = "nativeSecHeader";
+
+    public static final String NATIVE_TS_TOKEN = "nativeTimestampToken";
+
 }

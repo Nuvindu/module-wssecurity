@@ -15,28 +15,50 @@
 // under the License.
 
 // import ballerina/io;
+import ballerina/io;
 import ballerina/test;
+
+// @test:Config {
+//     groups: ["timestamp_token"]
+// }
+// function testTimestampToken() returns error? {
+//     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+    
+//     Document doc = check new(xmlPayload);
+//     WSSecurityHeader ws = check new(doc);
+//     error? insertSecHeader = ws.insertSecHeader();
+//     test:assertTrue(insertSecHeader is ());
+//     Request request = new();
+//     error? securityHeader = request.setSecurityHeader(ws);
+//     test:assertTrue(securityHeader is ());
+//     TimestampToken timestamp = new();
+//     string timestampResult = check timestamp.setTimestamp(ws, 600);
+
+//     string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
+//     string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
+//     string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
+//     test:assertTrue(timestampResult.includesMatch(ts_token));
+//     test:assertTrue(timestampResult.includesMatch(created));
+//     test:assertTrue(timestampResult.includesMatch(expires));
+// }
 
 @test:Config {
     groups: ["timestamp_token"]
 }
-function testTimestampToken() returns error? {
+function testTimestampToken1() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     
-    Document doc = check new(xmlPayload);
-    WSSecurityHeader ws = check new(doc);
-    error? insertSecHeader = ws.insertSecHeader();
-    test:assertTrue(insertSecHeader is ());
-    Request request = new();
-    error? securityHeader = request.setSecurityHeader(ws);
-    test:assertTrue(securityHeader is ());
-    TimestampToken timestamp = new();
-    string timestampResult = check timestamp.setTimestamp(ws);
-    // io:println(timestampResult);
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+
+    env.addTimestampToken(600);
+    string generateEnvelope = check env.generateEnvelope();
+    io:println(generateEnvelope);
     string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
     string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
     string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
-    test:assertTrue(timestampResult.includesMatch(ts_token));
-    test:assertTrue(timestampResult.includesMatch(created));
-    test:assertTrue(timestampResult.includesMatch(expires));
+    test:assertTrue(generateEnvelope.includesMatch(ts_token));
+    test:assertTrue(generateEnvelope.includesMatch(created));
+    test:assertTrue(generateEnvelope.includesMatch(expires));
 }

@@ -23,16 +23,23 @@ import org.apache.wss4j.dom.message.WSSecTimestamp;
 
 public class Timestamp {
 
-    public Timestamp() {
+    private final WSSecTimestamp timestamp;
+
+    public Timestamp(BObject secHeader, int timeToLive) {
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(Constants.NATIVE_SEC_HEADER));
+        WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
+        timestamp = new WSSecTimestamp(wsSecurityHeader.getWsSecHeader());
+        timestamp.setTimeToLive(timeToLive);
     }
 
-    public static Object setTimestamp(BObject secHeader) {
-//        BHandle handle = (BHandle) request.get(StringUtils.fromString("nativeRequest"));
-//        RequestData requestData = ((Request) handle.getValue()).getRequestDataObj();
-//        WSSecTimestamp timestampBuilder = new WSSecTimestamp(requestData.getSecHeader());
-        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString("nativeSecHeader"));
-        WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
-        WSSecTimestamp timestampBuilder = new WSSecTimestamp(wsSecurityHeader.getWsSecHeader());
+    protected WSSecTimestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public static Object addTimestamp(BObject timestamp) {
+        BHandle handle = (BHandle) timestamp.get(StringUtils.fromString(Constants.NATIVE_TS_TOKEN));
+        Timestamp timestampObj = (Timestamp) handle.getValue();
+        WSSecTimestamp timestampBuilder = timestampObj.getTimestamp();
         try {
             return StringUtils.fromString(DocBuilder.convertDocumentToString(timestampBuilder.build()));
         } catch (Exception e) {

@@ -15,17 +15,17 @@
 // under the License.
 import ballerina/jballerina.java;
 public class TimestampToken {
-    private handle nativeToken;
+    private handle nativeTimestampToken;
 
-    public function init() {
-        self.nativeToken = newTimestamp();
+    public function init(WSSecurityHeader wsSecHeader, int timeToLive) {
+        self.nativeTimestampToken = newTimestamp(wsSecHeader, timeToLive);
     }
 
-    public function setTimestamp(WSSecurityHeader wsSecHeader) returns string|error = @java:Method {
+    public function addTimestamp() returns string|error = @java:Method {
         'class: "org.wssecurity.Timestamp"
     } external;
 }
 
-function newTimestamp() returns handle = @java:Constructor {
+function newTimestamp(WSSecurityHeader wsSecHeader, int timeToLive) returns handle = @java:Constructor {
     'class: "org.wssecurity.Timestamp"
 } external;

@@ -31,6 +31,8 @@ import java.io.StringWriter;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -69,6 +71,24 @@ public class DocBuilder {
         Transformer transformer = transformerFactory.newTransformer();
         StringWriter writer = new StringWriter();
         transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        return writer.toString();
+    }
+
+    public static Object convertToString(BHandle doc) {
+        Document document = (Document) doc.getValue();
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer;
+        try {
+            transformer = transformerFactory.newTransformer();
+        } catch (TransformerConfigurationException e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
+        StringWriter writer = new StringWriter();
+        try {
+            transformer.transform(new DOMSource(document), new StreamResult(writer));
+        } catch (TransformerException e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
         return writer.toString();
     }
 }

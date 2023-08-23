@@ -25,6 +25,10 @@ public class Document {
     public function getDocument() returns string|error = @java:Method {
         'class: "org.wssecurity.DocBuilder"
     } external;
+
+    public function convertToString(handle doc) returns string|error = @java:Method {
+        'class: "org.wssecurity.DocBuilder"
+    } external;
 }
 
 function newDocument(string xmlPayload) returns handle|error = @java:Constructor {

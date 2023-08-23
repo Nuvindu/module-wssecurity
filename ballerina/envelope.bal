@@ -32,9 +32,9 @@ public class Envelope {
         return self.wsSecHeader.insertSecHeader();
     }
 
-    public function addTimestampToken() returns error? {
-        TimestampToken timestamp = new ();
-        _ = check timestamp.setTimestamp(self.wsSecHeader);
+    public function addTimestampToken(int timeToLive) {
+        self.timestampToken = new (self.wsSecHeader, timeToLive);
+        // _ = check timestamp.setTimestamp(self.wsSecHeader);
     }
 
     public function addUsernameToken(string username, string password, string passwordType) returns error? {
@@ -67,7 +67,7 @@ public class Envelope {
         self.isAsymmetricBinding = true;
     }
 
-    public function generateEnvelope() returns string|error? {
+    public function generateEnvelope() returns string|error {
         string output = "";
         if self.isSymmetricBinding {
             return check (<UsernameToken>self.usernameToken)
@@ -79,7 +79,7 @@ public class Envelope {
                                        ASYMMETRIC_SIGN_AND_ENCRYPT, "key");
         }
         if self.timestampToken !is () {
-            output = check (<TimestampToken>self.timestampToken).setTimestamp(self.wsSecHeader);
+            output = check (<TimestampToken>self.timestampToken).addTimestamp();
         }
         if self.usernameToken !is () {
             output = check (<UsernameToken>self.usernameToken)
