@@ -32,7 +32,7 @@ import javax.xml.crypto.dsig.Reference;
 
 public class Signature {
 
-    public void buildSignature(RequestData reqData, WSSecSignature sign, byte[] key) throws WSSecurityException {
+    public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
         List<WSEncryptionPart> parts = null;
         parts = new ArrayList<>(1);
         Document doc = reqData.getSecHeader().getSecurityHeaderElement().getOwnerDocument();
@@ -62,4 +62,35 @@ public class Signature {
         sign.prepare(usernameToken.getCryptoProperties());
         return sign;
     }
+
+    public WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
+                                           byte[] privateKey) throws WSSecurityException {
+        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
+//        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
+        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
+        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
+        sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
+        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
+        sign.setSecretKey(privateKey);
+        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
+        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
+//        sign.setX509Certificate(usernameToken.getX509Certificate());
+//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
+//        TODO - Add support for different signature methods
+        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
+        sign.setUserInfo("wss40", "security");
+//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
+        sign.prepare(usernameToken.getCryptoProperties());
+        return sign;
+    }
+
+//    public String addElement(WSSecHeader wsSecHeader) throws Exception {
+//
+//        Element secHeaderElem = wsSecHeader.getSecurityHeaderElement();
+//        Node nd = secHeaderElem.getOwnerDocument()
+//                .createElementNS("http://schemas.xmlsoap.org/ws/2005/07/securitypolicy",
+//                        "wsp:Policy");
+//        secHeaderElem.appendChild(nd);
+//        return UsernameToken.convertDocumentToString(secHeaderElem.getOwnerDocument());
+//    }
 }

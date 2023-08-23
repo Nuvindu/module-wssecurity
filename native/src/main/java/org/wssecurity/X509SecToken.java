@@ -10,14 +10,9 @@ import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.WSConstants;
 
 public class X509SecToken  {
-//    private final X509Certificate x509Certificate;
     private final Crypto crypto;
 
     public X509SecToken(BString filePath) {
-//        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
-//        DocBuilder docBuilder = (DocBuilder) handle.getValue();
-//        Document document = docBuilder.getNativeDocument();
-//        X509Security x509Security = new X509Security(document);
         try {
 //            this.x509Certificate = x509Security.getX509Certificate(CryptoFactory.getInstance(filePath.getValue()));
             this.crypto = CryptoFactory.getInstance(filePath.getValue());

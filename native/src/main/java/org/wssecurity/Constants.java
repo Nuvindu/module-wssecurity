@@ -23,4 +23,6 @@ public class Constants {
     public static final String ENCRYPT = "ENCRYPT";
     public static final String SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT";
 
+    public static final String ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT";
+
 }

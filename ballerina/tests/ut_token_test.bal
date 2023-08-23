@@ -165,7 +165,7 @@ function testUsernameTokenWithEncryption() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "encryption", "signature"]
+    groups: ["username_token", "encryption", "signature", "qw"]
 }
 function testUsernameTokenWithSignatureAndEncryption() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -176,7 +176,7 @@ function testUsernameTokenWithSignatureAndEncryption() returns error? {
     test:assertEquals(insertSecHeader, ());
     UsernameToken userNameToken = new(ws);
     string buildToken = check userNameToken.buildToken("user", "pass", SIGN_AND_ENCRYPT);
-
+    
     // verify signature attributes in the security header
     string:RegExp signature = re `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" .*">.*</ds:Signature>`;
     string:RegExp signatureInfo = re `<ds:SignedInfo>.*</ds:SignedInfo>`;
@@ -255,5 +255,89 @@ function testUsernameTokenWithX509Token() returns error? {
     test:assertTrue(buildToken.includesMatch(secTokenReference));
     test:assertTrue(buildToken.includesMatch(keyIdentifier));
     test:assertTrue(buildToken.includesMatch(securityTokenRef));
+}
 
+@test:Config {
+    groups: ["username_token", "signature"]
+}
+function testUsernameTokenWithSignature1() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    error? usernameToken = env.addUsernameToken("user", "pass", SIGN);
+    test:assertEquals(securityHeader, ());
+    test:assertEquals(usernameToken, ());
+    // io:println(env.generateEnvelope());
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "abc"]
+}
+function testTimestampWithUsernameTokenWithSignature1() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+    error? timestampToken = env.addTimestampToken();
+    test:assertEquals(timestampToken, ());
+    error? usernameToken = env.addUsernameToken("user", "pass", SIGN);
+    test:assertEquals(usernameToken, ());
+    // io:println(env.generateEnvelope());
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "x509"]
+}
+function testUsernameTokenWithX509Token1() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+
+    error? timestampToken = env.addTimestampToken();
+    test:assertEquals(timestampToken, ());
+
+    error? usernameToken = env.addUsernameToken("user", "pass", SIGN);
+    test:assertEquals(usernameToken, ());
+
+    error? x509Token = env.addX509Token("wss40.properties");
+    test:assertEquals(x509Token, ());
+
+    // io:println(env.generateEnvelope());
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "symmetric_binding"]
+}
+function testUsernameTokenWithSymmetricBinding() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+
+    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", "wss40.properties");
+    test:assertEquals(symmetricBinding, ());
+
+    // io:println(env.generateEnvelope());
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding"]
+}
+function testUsernameTokenWithAsymmetricBinding() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new(xmlPayload);
+    error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+    
+    byte[] key = "test".toBytes();
+    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", key, "wss40.properties");
+    test:assertEquals(asymmetricBinding, ());
+
+    // io:println(env.generateEnvelope());
 }

@@ -19,7 +19,6 @@ import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
-import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecTimestamp;
 
 public class Timestamp {
@@ -27,11 +26,13 @@ public class Timestamp {
     public Timestamp() {
     }
 
-    public static Object setTimestamp(BObject request) {
-        BHandle handle = (BHandle) request.get(StringUtils.fromString("nativeRequest"));
-        RequestData requestData = ((Request) handle.getValue()).getRequestDataObj();
-        WSSecTimestamp timestampBuilder = new WSSecTimestamp(requestData.getSecHeader());
-
+    public static Object setTimestamp(BObject secHeader) {
+//        BHandle handle = (BHandle) request.get(StringUtils.fromString("nativeRequest"));
+//        RequestData requestData = ((Request) handle.getValue()).getRequestDataObj();
+//        WSSecTimestamp timestampBuilder = new WSSecTimestamp(requestData.getSecHeader());
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString("nativeSecHeader"));
+        WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
+        WSSecTimestamp timestampBuilder = new WSSecTimestamp(wsSecurityHeader.getWsSecHeader());
         try {
             return StringUtils.fromString(DocBuilder.convertDocumentToString(timestampBuilder.build()));
         } catch (Exception e) {

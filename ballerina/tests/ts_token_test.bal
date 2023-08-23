@@ -31,8 +31,8 @@ function testTimestampToken() returns error? {
     error? securityHeader = request.setSecurityHeader(ws);
     test:assertTrue(securityHeader is ());
     TimestampToken timestamp = new();
-    string timestampResult = check timestamp.setTimestamp(request);
-
+    string timestampResult = check timestamp.setTimestamp(ws);
+    // io:println(timestampResult);
     string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
     string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
     string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
