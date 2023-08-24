@@ -13,11 +13,25 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-public enum UsernameTokenType {
-    TEXT = "TEXT",
-    DIGEST = "DIGEST",
+public enum types {
+    SYMMETRIC_SIGN_AND_ENCRYPT = "SYMMETRIC_SIGN_AND_ENCRYPT",
+    ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT"
+}
+
+public enum AuthenticationType {
+    NONE = "NONE",
     SIGN = "SIGNATURE",
     ENCRYPT = "ENCRYPT",
-    SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT",
-    ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT"
+    SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT"
+}
+
+public enum PasswordTypes {
+    TEXT = "TEXT",
+    DIGEST = "DIGEST"
+}
+
+public enum BindingType {
+    TRANSPORT = "TransportBinding",
+    SYMMETRIC = "SymmetricBinding",
+    ASYMMETRIC = "AsymmetricBinding"
 }

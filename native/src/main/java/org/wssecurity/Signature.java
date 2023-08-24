@@ -25,6 +25,10 @@ import org.apache.wss4j.dom.message.WSSecSignature;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
 import org.w3c.dom.Document;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +86,19 @@ public class Signature {
 //        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
         sign.prepare(usernameToken.getCryptoProperties());
         return sign;
+    }
+
+    public static byte[] convertObjectToByteArray(Serializable object) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+
+        // Write the object to the object output stream
+        objectOutputStream.writeObject(object);
+        objectOutputStream.flush();
+
+        // Get the byte array from the byte array output stream
+        return byteArrayOutputStream.toByteArray();
+
     }
 
 //    public String addElement(WSSecHeader wsSecHeader) throws Exception {

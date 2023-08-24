@@ -18,15 +18,22 @@ package org.wssecurity;
 public class Constants {
     public static final int ITERATION = 1000;
     public static final String TEXT = "TEXT";
-    public static final String SIGNATURE = "SIGNATURE";
     public static final String DIGEST = "DIGEST";
+
+    public static final String SIGNATURE = "SIGNATURE";
     public static final String ENCRYPT = "ENCRYPT";
     public static final String SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT";
+
+    public static final String SYMMETRIC_SIGN_AND_ENCRYPT = "SYMMETRIC_SIGN_AND_ENCRYPT";
+
+    public static final String NONE = "NONE";
 
     public static final String ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT";
 
     public static final String NATIVE_SEC_HEADER = "nativeSecHeader";
 
     public static final String NATIVE_TS_TOKEN = "nativeTimestampToken";
+
+    public static final String NATIVE_UT = "nativeUT";
 
 }

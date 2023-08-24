@@ -24,7 +24,7 @@ public class X509SecToken  {
     public static void addX509Token(BObject x509Token, BObject userToken) {
         BHandle handle = (BHandle) x509Token.get(StringUtils.fromString("nativeX509Token"));
         X509SecToken x509SecToken = (X509SecToken) handle.getValue();
-        handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
+        handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
         UsernameToken usernameToken = (UsernameToken) handle.getValue();
         usernameToken.setX509Token(x509SecToken);
     }

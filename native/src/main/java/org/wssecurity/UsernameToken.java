@@ -30,6 +30,11 @@ import org.w3c.dom.Document;
 
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Objects;
 
 import javax.xml.transform.Transformer;
@@ -84,9 +89,40 @@ public class UsernameToken {
         return (x509SecToken == null) ? null : x509SecToken.getCryptoProperties();
     }
 
+    public static Object addUsernameToken(BObject userToken, BString username, BString password,
+                                          BString pwType, BString authType) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+        try {
+            Document doc = null;
+            if (authType.getValue().equals(Constants.NONE)) {
+                setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
+                doc = buildDocument(usernameToken, pwType.getValue());
+            } else if (authType.getValue().equals(Constants.SIGNATURE)) {
+                doc = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
+                                            pwType.getValue(), salt, null);
+            } else if (authType.getValue().equals(Constants.ENCRYPT)) {
+                setConfigs(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
+                buildDocument(usernameToken, pwType.getValue());
+                Encryption encryption = (new Encryption(WSConstants.AES_128));
+                doc = encryption.encryptEnv(usernameToken, salt);
+            } else if (authType.getValue().equals(Constants.SIGN_AND_ENCRYPT)) {
+                addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
+                                      pwType.getValue(), salt, null);
+                Encryption encryption = (new Encryption(WSConstants.AES_128));
+                doc = encryption.encryptEnv(usernameToken, salt);
+            }
+            return StringUtils.fromString(convertDocumentToString(doc));
+        } catch (Exception e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
+    }
+
     public static Object buildToken(BObject userToken, BString username, BString password,
                                     BString pwType) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         byte[] salt = UsernameTokenUtil.generateSalt(true);
@@ -100,6 +136,7 @@ public class UsernameToken {
                 buildDocument(usernameToken, pwType.getValue());
                 Encryption encryption = (new Encryption(WSConstants.AES_128));
                 doc = encryption.encryptEnv(usernameToken, salt);
+                return StringUtils.fromString(convertDocumentToString(doc));
             } else if (pwType.getValue().equals(Constants.SIGN_AND_ENCRYPT)) {
                 addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
                         pwType.getValue(), salt, null);
@@ -115,18 +152,49 @@ public class UsernameToken {
         }
     }
 
-    public static Object buildTokenWithKey(BObject userToken, BString username, BString password,
-                                    BString pwType, BString privateKey) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
+    public static Object addUsernameTokenWithKey(BObject userToken, BString username, BString password,
+                                                 BString pwType, BString privateKey, BString authType) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         byte[] salt = UsernameTokenUtil.generateSalt(true);
         try {
-            if (pwType.getValue().equals(Constants.ASYMMETRIC_SIGN_AND_ENCRYPT)) {
+            if (authType.getValue().equals(Constants.SYMMETRIC_SIGN_AND_ENCRYPT)) {
                 addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                        "TEXT", salt, privateKey.getValue().getBytes(StandardCharsets.UTF_8));
+                                      pwType.getValue(), salt, privateKey.getValue().getBytes(StandardCharsets.UTF_8));
                 Encryption encryption = (new Encryption(WSConstants.AES_128));
                 Document document = encryption.encryptEnv(usernameToken, salt);
+                return StringUtils.fromString(convertDocumentToString(document));
+            }
+            setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
+            return StringUtils.fromString(convertDocumentToString(buildDocument(usernameToken, pwType.getValue())));
+        } catch (Exception e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
+    }
+
+    public PrivateKey derivePrivateKey(String path) throws Exception {
+        byte[] key = Files.readAllBytes(Paths.get(path));
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(key);
+        return keyFactory.generatePrivate(keySpec);
+    }
+
+    public static Object addUsernameTokenWithAsymmetricKey(BObject userToken, BString username, BString password,
+                                                           BString pwType, BString privateKey, BString publicKey,
+                                                           BString authType) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+
+        try {
+            if (authType.getValue().equals(Constants.ASYMMETRIC_SIGN_AND_ENCRYPT)) {
+                addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
+                        pwType.getValue(), salt, privateKey.getValue().getBytes(StandardCharsets.UTF_8));
+                Encryption encryption = (new Encryption(WSConstants.AES_128));
+                Document document = encryption.encryptEnv(usernameToken,
+                                                          publicKey.getValue().getBytes(StandardCharsets.UTF_8));
                 return StringUtils.fromString(convertDocumentToString(document));
             }
             setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
@@ -158,11 +226,11 @@ public class UsernameToken {
     }
 
     public static Document buildDocument(WSSecUsernameToken usernameToken, String passwordType) {
-        if (Objects.equals(passwordType, Constants.SIGNATURE)) {
-            byte[] salt = UsernameTokenUtil.generateSalt(true);
-            usernameToken.prepare(salt);
-            return usernameToken.build(salt);
-        }
+//        if (Objects.equals(passwordType, Constants.SIGNATURE)) {
+//            byte[] salt = UsernameTokenUtil.generateSalt(true);
+//            usernameToken.prepare(salt);
+//            return usernameToken.build(salt);
+//        }
         return usernameToken.build();
     }
 
