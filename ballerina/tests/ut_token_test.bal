@@ -130,7 +130,9 @@ function testUsernameTokenWithX509Signature() returns error? {
     test:assertEquals(securityHeader, ());
 
     env.addUsernameToken(username, password, TEXT, SIGN);
-    env.addX509Token("wss40.properties");
+    error? x509Token = env.addX509Token("wss40.properties");
+    test:assertEquals(x509Token, ());
+
     string buildToken = check env.generateEnvelope();
     // io:println(buildToken);
 
@@ -259,7 +261,8 @@ function testUsernameTokenWithX509SignatureAndEncryption() returns error? {
     test:assertEquals(securityHeader, ());
 
     env.addUsernameToken(username, password, DIGEST, SIGN_AND_ENCRYPT);
-    env.addX509Token(certPath);
+    error? x509Token = env.addX509Token(certPath);
+    test:assertEquals(x509Token, ());
     string buildToken = check env.generateEnvelope();
     // io:println(buildToken);
 
@@ -307,7 +310,7 @@ function testUsernameTokenWithSymmetricBinding() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "asymmetric_binding"]
+    groups: ["username_token", "signature", "asymmetric_binding", "a"]
 }
 function testUsernameTokenWithAsymmetricBinding() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -315,8 +318,10 @@ function testUsernameTokenWithAsymmetricBinding() returns error? {
     Envelope env = check new(xmlPayload);
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
+    string publicKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/publickey.cer";
+    string privateKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
 
-    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", "EWJHEF23RJ4", "JFLIHDFLI209UE");
+    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKey, publicKey);
     test:assertEquals(asymmetricBinding, ());
 
     string buildToken = check env.generateEnvelope();
@@ -334,7 +339,10 @@ function testUsernameTokenWithAsymmetricBindingWithX509() returns error? {
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 
-    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", "EWJHEF23RJ4", "JFLIHDFLI209UE", "wss40.properties");
+    string publicKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/publickey.cer";
+    string privateKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
+
+    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKey, publicKey, "wss40.properties");
     test:assertEquals(asymmetricBinding, ());
 
     string buildToken = check env.generateEnvelope();
@@ -350,7 +358,7 @@ function testUsernameTokenWithTranportBinding() returns error? {
     string username = "user";
     string password = "password";
 
-    Envelope env = check new(xmlPayload);
+    Envelope env = check new(xmlPayload) ;
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 

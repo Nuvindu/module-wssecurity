@@ -20,4 +20,5 @@ module wssecurity {
     requires org.apache.santuario.xmlsec;
     requires java.xml;
     requires java.xml.crypto;
+    requires org.apache.commons.codec;
 }

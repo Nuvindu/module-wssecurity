@@ -11,10 +11,8 @@ import org.apache.wss4j.dom.WSConstants;
 
 public class X509SecToken  {
     private final Crypto crypto;
-
     public X509SecToken(BString filePath) {
         try {
-//            this.x509Certificate = x509Security.getX509Certificate(CryptoFactory.getInstance(filePath.getValue()));
             this.crypto = CryptoFactory.getInstance(filePath.getValue());
         } catch (WSSecurityException e) {
             throw new RuntimeException(e);

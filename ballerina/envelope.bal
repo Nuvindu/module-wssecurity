@@ -60,7 +60,7 @@ public class Envelope {
         self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
     }
 
-    public function addX509Token(string certificatePath) {
+    public function addX509Token(string certificatePath) returns error? {
         self.x509Token = new(certificatePath);
         if self.usernameToken !is () {
             (<X509Token>self.x509Token).addX509Token(<UsernameToken>self.usernameToken);
@@ -68,10 +68,10 @@ public class Envelope {
     }
 
     public function addSymmetricBinding(string alias, string password, string publicKey, string? certPath = ()) returns error? {
-        self.setKey(publicKey);
+        self.setKey("/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem");
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
         if certPath !is () {
-            _ = self.addX509Token(certPath);
+            _ = check self.addX509Token(certPath);
         }
         self.isSymmetricBinding = true;
     }
@@ -82,7 +82,7 @@ public class Envelope {
         self.setPrivateKey(privateKey);
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
         if certPath !is () {
-            _ = self.addX509Token(certPath);
+            _ = check self.addX509Token(certPath);
         }
         self.isAsymmetricBinding = true;
     }

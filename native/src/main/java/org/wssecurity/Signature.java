@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,14 +69,14 @@ public class Signature {
     }
 
     public WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                           byte[] privateKey) throws WSSecurityException {
+                                           PrivateKey privateKey) throws WSSecurityException, IOException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
 //        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
         sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
         sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(privateKey);
+        sign.setSecretKey(privateKey.getEncoded());
         sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
         sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
 //        sign.setX509Certificate(usernameToken.getX509Certificate());
