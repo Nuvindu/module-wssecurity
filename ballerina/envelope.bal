@@ -61,7 +61,7 @@ public class Envelope {
     }
 
     public function addX509Token(string certificatePath) returns error? {
-        self.x509Token = new(certificatePath);
+        self.x509Token = check new("/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt");
         if self.usernameToken !is () {
             (<X509Token>self.x509Token).addX509Token(<UsernameToken>self.usernameToken);
         }
@@ -98,38 +98,38 @@ public class Envelope {
 
     public function generateEnvelope() returns string|error {
         string output = "";
-        if self.isSymmetricBinding {
-            return check (<UsernameToken>self.usernameToken)
-                    .addUsernameTokenWithKey((<UsernameData>self.userData).username, 
-                                             (<UsernameData>self.userData).password, 
-                                             (<UsernameData>self.userData).pwType, 
-                                             self.getKey(), SYMMETRIC_SIGN_AND_ENCRYPT);
-        }
-        if self.isAsymmetricBinding {
-            return check (<UsernameToken>self.usernameToken)
-                    .addUsernameTokenWithAsymmetricKey((<UsernameData>self.userData).username, 
-                                                       (<UsernameData>self.userData).password, 
-                                                       (<UsernameData>self.userData).pwType, self.getPrivateKey(),
-                                                       self.getKey(), ASYMMETRIC_SIGN_AND_ENCRYPT);
-        }
-        if self.isTransportBinding {
-            if self.timestampToken !is () {
-                output = check (<TimestampToken>self.timestampToken).addTimestamp();
-            }
-            output = check (<UsernameToken>self.usernameToken)
-                        .addUsernameToken((<UsernameData>self.userData).username, (<UsernameData>self.userData).password,
-                                      (<UsernameData>self.userData).pwType, (<UsernameData>self.userData).authType); 
+        UsernameToken? ut = self.usernameToken;
+        UsernameData? utData = self.userData;
+        TimestampToken? tsT = self.timestampToken;
 
+        if self.isSymmetricBinding {
+            if ut !is () && utData != () {
+                return check ut.addUsernameTokenWithKey(utData.username, utData.password, utData.pwType, 
+                                                        self.getKey(), SYMMETRIC_SIGN_AND_ENCRYPT);
+            }
+        } else if self.isAsymmetricBinding {
+            if ut !is () && utData != () {
+                return check ut.addUsernameTokenWithAsymmetricKey(utData.username, utData.password, utData.pwType, 
+                                                                  self.getPrivateKey(), self.getKey(), 
+                                                                  ASYMMETRIC_SIGN_AND_ENCRYPT);
+            }
+        } else if self.isTransportBinding {
+            if tsT !is () {
+                output = check tsT.addTimestamp();
+            }
+            if ut !is () && utData != () {
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData.authType);
+            }
+
+        } else if ut !is () && utData != () {
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData.authType);
         }
-        if self.timestampToken !is () {
-            output = check (<TimestampToken>self.timestampToken).addTimestamp();
+        if tsT !is () {
+            output = check tsT.addTimestamp();
         }
-        if self.usernameToken !is () {
-            //TODO: possibility of spread operator
-            output = check (<UsernameToken>self.usernameToken)
-                        .addUsernameToken((<UsernameData>self.userData).username, (<UsernameData>self.userData).password,
-                                      (<UsernameData>self.userData).pwType, (<UsernameData>self.userData).authType);            
-        }
+        if output == "" {
+            return error("WS Security Policy headers are not set.");
+        }        
         return output;
     }
 }

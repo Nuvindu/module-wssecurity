@@ -16,10 +16,10 @@
 import ballerina/jballerina.java;
 
 public class Document {
-    private handle nativeDoc;
+    private handle nativeDocumentBuilder;
 
     public function init(string xmlPayload) returns error? {
-        self.nativeDoc = check newDocument(xmlPayload);
+        self.nativeDocumentBuilder = check newDocument(xmlPayload);
     }
 
     public function getDocument() returns string|error = @java:Method {

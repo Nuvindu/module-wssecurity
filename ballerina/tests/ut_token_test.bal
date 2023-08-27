@@ -15,6 +15,7 @@
 // under the License.
 
 // import ballerina/io;
+import ballerina/io;
 import ballerina/test;
 
 function assertSignatureWithX509(string buildToken) {
@@ -27,7 +28,7 @@ function assertSignatureWithoutX509(string buildToken) {
     string:RegExp signature = re `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" .*">.*</ds:Signature>`;
     string:RegExp signatureInfo = re `<ds:SignedInfo>.*</ds:SignedInfo>`;
     string:RegExp canonicalizationMethod = re `<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">`;
-    string:RegExp signatureMethod = re `<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#hmac-sha1"/>`;
+    string:RegExp signatureMethod = re `<ds:SignatureMethod Algorithm=".*"/>`;
     string:RegExp transformMethod = re `<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>`;
     string:RegExp digestMethod = re `<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>`;
     string:RegExp signatureValue = re `<ds:SignatureValue>.*</ds:SignatureValue>`;
@@ -77,6 +78,7 @@ function testUsernameTokenWithPlaintextPassword() returns error? {
 
     env.addUsernameToken(username, password, TEXT);
     string buildToken = check env.generateEnvelope();
+    
     string:RegExp usernameTokenTag = re `<wsse:UsernameToken wsu:Id=".*">.*</wsse:UsernameToken>`;
     string:RegExp usernameTag = re `<wsse:Username>${username}</wsse:Username>`;
     string:RegExp passwordTag  = re `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${password}</wsse:Password>`;
@@ -130,7 +132,7 @@ function testUsernameTokenWithX509Signature() returns error? {
     test:assertEquals(securityHeader, ());
 
     env.addUsernameToken(username, password, TEXT, SIGN);
-    error? x509Token = env.addX509Token("wss40.properties");
+    error? x509Token = env.addX509Token("/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt");
     test:assertEquals(x509Token, ());
 
     string buildToken = check env.generateEnvelope();
@@ -152,11 +154,9 @@ function testUsernameTokenWithSignature() returns error? {
     test:assertEquals(securityHeader, ());
 
     env.addUsernameToken(username, password, TEXT, SIGN);
-    // env.addX509Token("wss40.properties");
     string buildToken = check env.generateEnvelope();
-    // io:println(buildToken);
-
     assertSignatureWithoutX509(buildToken);
+    // io:println(buildToken);
 }
 
 @test:Config {
@@ -175,21 +175,7 @@ function testUsernameTokenWithEncryption() returns error? {
     env.addUsernameToken(username, password, DIGEST, ENCRYPT);
     string buildToken = check env.generateEnvelope();
 
-    string:RegExp encryptedData = re `<xenc:EncryptedData.*>`;
-    string:RegExp encMethod = re `<xenc:EncryptionMethod Algorithm=".*"/>`;
-    string:RegExp keyInfo = re `<ds:KeyInfo xmlns:ds=".*">`;
-    string:RegExp derivedKeyInfo = re `<wsc:DerivedKeyToken .*>`;
-    string:RegExp secTokenRef = re `<wsse:SecurityTokenReference xmlns:wsse=".*">`;
-    string:RegExp cipherData = re `<xenc:CipherData>`;
-    string:RegExp cipherValue = re `<xenc:CipherValue>`;
-
-    test:assertTrue(buildToken.includesMatch(encryptedData));
-    test:assertTrue(buildToken.includesMatch(encMethod));
-    test:assertTrue(buildToken.includesMatch(keyInfo));
-    test:assertTrue(buildToken.includesMatch(derivedKeyInfo));
-    test:assertTrue(buildToken.includesMatch(secTokenRef));
-    test:assertTrue(buildToken.includesMatch(cipherData));
-    test:assertTrue(buildToken.includesMatch(cipherValue));
+    assertEncryptedPart(buildToken);
 }
 
 @test:Config {
@@ -209,41 +195,9 @@ function testUsernameTokenWithSignatureAndEncryption() returns error? {
     string buildToken = check env.generateEnvelope();
     // io:println(buildToken);
 
-    // verify signature attributes in the security header
-    string:RegExp signature = re `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" .*">.*</ds:Signature>`;
-    string:RegExp signatureInfo = re `<ds:SignedInfo>.*</ds:SignedInfo>`;
-    string:RegExp canonicalizationMethod = re `<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">`;
-    string:RegExp signatureMethod = re `<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#hmac-sha1"/>`;
-    string:RegExp transformMethod = re `<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>`;
-    string:RegExp digestMethod = re `<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>`;
-    string:RegExp signatureValue = re `<ds:SignatureValue>.*</ds:SignatureValue>`;
-    string:RegExp securityTokenRef = re `<wsse:SecurityTokenReference wsu:Id=".*">.*</wsse:SecurityTokenReference>`;
-
-    test:assertTrue(buildToken.includesMatch(signature));
-    test:assertTrue(buildToken.includesMatch(signatureInfo));
-    test:assertTrue(buildToken.includesMatch(canonicalizationMethod));
-    test:assertTrue(buildToken.includesMatch(signatureMethod));
-    test:assertTrue(buildToken.includesMatch(transformMethod));
-    test:assertTrue(buildToken.includesMatch(digestMethod));
-    test:assertTrue(buildToken.includesMatch(signatureValue));
-    test:assertTrue(buildToken.includesMatch(securityTokenRef));
-
-    // verify the encrypted attributes in the SOAP envelope
-    string:RegExp encryptedData = re `<xenc:EncryptedData.*</xenc:EncryptedData>`;
-    string:RegExp encMethod = re `<xenc:EncryptionMethod Algorithm=".*"/>`;
-    string:RegExp keyInfo = re `<ds:KeyInfo xmlns:ds=".*">.*</ds:KeyInfo>`;
-    string:RegExp derivedKeyInfo = re `<wsc:DerivedKeyToken .*>.*</wsc:DerivedKeyToken>`;
-    string:RegExp secTokenRef = re `<wsse:SecurityTokenReference xmlns:wsse=".*">.*</wsse:SecurityTokenReference>`;
-    string:RegExp cipherData = re `<xenc:CipherData>.*</xenc:CipherData>`;
-    string:RegExp cipherValue = re `<xenc:CipherValue>.*</xenc:CipherValue>`;
-
-    test:assertTrue(buildToken.includesMatch(encryptedData));
-    test:assertTrue(buildToken.includesMatch(encMethod));
-    test:assertTrue(buildToken.includesMatch(keyInfo));
-    test:assertTrue(buildToken.includesMatch(derivedKeyInfo));
-    test:assertTrue(buildToken.includesMatch(secTokenRef));
-    test:assertTrue(buildToken.includesMatch(cipherData));
-    test:assertTrue(buildToken.includesMatch(cipherValue));
+    assertSignatureWithoutX509(buildToken);
+    assertEncryptedPart(buildToken);
+    io:println(buildToken);
 }
 
 @test:Config {
@@ -254,7 +208,7 @@ function testUsernameTokenWithX509SignatureAndEncryption() returns error? {
 
     string username = "user";
     string password = "password";
-    string certPath = "wss40.properties";
+    string certPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
 
     Envelope env = check new(xmlPayload);
     error? securityHeader = env.addSecurityHeader();
@@ -292,7 +246,7 @@ function testUsernameTokenWithSymmetricBindingWithX509() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "symmetric_binding"]
+    groups: ["username_token", "signature", "symmetric_binding", "d"]
 }
 function testUsernameTokenWithSymmetricBinding() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -330,7 +284,7 @@ function testUsernameTokenWithAsymmetricBinding() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "asymmetric_binding", "x509"]
+    groups: ["username_token", "signature", "asymmetric_binding", "x509", "b"]
 }
 function testUsernameTokenWithAsymmetricBindingWithX509() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;

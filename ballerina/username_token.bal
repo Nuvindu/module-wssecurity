@@ -22,10 +22,6 @@ public class UsernameToken {
         self.nativeUT = newToken(wsSecHeader);
     }
 
-    public function buildToken(string username, string password, string pwType) returns string|error = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
-    } external;
-
     public function addUsernameToken(string username, string password, 
                                      string pwType, string authType = NONE) returns string|error = @java:Method {
         'class: "org.wssecurity.UsernameToken"

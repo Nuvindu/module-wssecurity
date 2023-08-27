@@ -6,17 +6,30 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.crypto.CryptoFactory;
-import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.WSConstants;
+
+import java.io.FileInputStream;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 public class X509SecToken  {
     private final Crypto crypto;
-    public X509SecToken(BString filePath) {
+    private final X509Certificate x509Certificate;
+    public X509SecToken(BString filePath) throws Exception {
+        FileInputStream fis = null;
         try {
+            fis = new FileInputStream(filePath.getValue());
+            CertificateFactory certificateFactory = CertificateFactory.getInstance(Constants.X509);
+            this.x509Certificate = (X509Certificate) certificateFactory.generateCertificate(fis);
             this.crypto = CryptoFactory.getInstance(filePath.getValue());
-        } catch (WSSecurityException e) {
-            throw new RuntimeException(e);
+        } finally {
+            assert fis != null;
+            fis.close();
         }
+    }
+
+    protected X509Certificate getX509Certificate() {
+        return x509Certificate;
     }
 
     public static void addX509Token(BObject x509Token, BObject userToken) {
@@ -30,14 +43,6 @@ public class X509SecToken  {
     protected Crypto getCryptoProperties() {
         return this.crypto;
     }
-
-//    protected X509Certificate getX509Certificate() {
-//        return x509Certificate;
-//    }
-//
-//    protected String getSignatureAlgoName() {
-//        return this.x509Certificate.getSigAlgName();
-//    }
 
     public String getCustomTokenValueType() {
         return WSConstants.X509TOKEN_NS + "#X509Token";

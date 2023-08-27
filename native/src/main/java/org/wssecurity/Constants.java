@@ -36,4 +36,8 @@ public class Constants {
 
     public static final String NATIVE_UT = "nativeUT";
 
+    public static final String NATIVE_DOCUMENT = "nativeDocumentBuilder";
+
+    public static final String X509 = "X.509";
+
 }

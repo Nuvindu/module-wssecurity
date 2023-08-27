@@ -29,13 +29,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.security.PrivateKey;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
 
 public class Signature {
+
+    private String signatureAlgorithm;
+
+    public Signature(String signatureAlgorithm) {
+        this.signatureAlgorithm = signatureAlgorithm;
+    }
+
+    protected String getSignatureAlgorithm() {
+        return signatureAlgorithm;
+    }
+
+    protected void setSignatureAlgorithm(String signatureAlgorithm) {
+        this.signatureAlgorithm = signatureAlgorithm;
+    }
 
     public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
         List<WSEncryptionPart> parts = null;
@@ -47,44 +61,26 @@ public class Signature {
         reqData.getSignatureValues().add(sign.getSignatureValue());
     }
 
-    public WSSecSignature prepareSignature(RequestData reqData,
-                                           UsernameToken usernameToken) throws WSSecurityException {
-        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(usernameToken.getUsernameToken().getDerivedKey(salt));
-        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
-        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-//        sign.setX509Certificate(usernameToken.getX509Certificate());
-//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
-//        TODO - Add support for different signature methods
-        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
-        sign.setUserInfo("wss40", "security");
-//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
-        sign.prepare(usernameToken.getCryptoProperties());
-        return sign;
-    }
-
     public WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                           PrivateKey privateKey) throws WSSecurityException, IOException {
+                                           Key key, String algorithm) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
 //        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
         sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
         sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(privateKey.getEncoded());
+        byte[] secretKey = (key != null)
+                ? key.getEncoded()
+                : usernameToken.getUsernameToken()
+                    .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
+        sign.setSecretKey(secretKey);
         sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
         sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-//        sign.setX509Certificate(usernameToken.getX509Certificate());
-//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
 //        TODO - Add support for different signature methods
-        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
-        sign.setUserInfo("wss40", "security");
-//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
+        sign.setSignatureAlgorithm(algorithm);
+        if (usernameToken.getX509SecToken() != null) {
+            sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
+        }
         sign.prepare(usernameToken.getCryptoProperties());
         return sign;
     }

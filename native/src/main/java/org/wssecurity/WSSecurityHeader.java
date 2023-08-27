@@ -28,7 +28,7 @@ public class WSSecurityHeader {
     private final Document document;
 
     public WSSecurityHeader(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
         DocBuilder docBuilder = (DocBuilder) handle.getValue();
         this.wsSecHeader = new WSSecHeader(docBuilder.getNativeDocument());
         this.document = docBuilder.getNativeDocument();
@@ -43,7 +43,7 @@ public class WSSecurityHeader {
     }
 
     public static void insertSecHeader(BObject secHeader) throws WSSecurityException {
-        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString("nativeSecHeader"));
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(Constants.NATIVE_SEC_HEADER));
         WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
         wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
     }

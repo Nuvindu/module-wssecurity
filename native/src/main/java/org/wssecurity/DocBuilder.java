@@ -52,11 +52,11 @@ public class DocBuilder {
     }
 
     public static Object getDocument(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
         DocBuilder docBuilder = (DocBuilder) handle.getValue();
-        Document document1 = docBuilder.getNativeDocument();
+        Document document = docBuilder.getNativeDocument();
         try {
-            return StringUtils.fromString(convertDocumentToString(document1));
+            return StringUtils.fromString(convertDocumentToString(document));
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

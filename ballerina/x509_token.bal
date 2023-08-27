@@ -18,8 +18,8 @@ import ballerina/jballerina.java;
 public class X509Token {
     private handle nativeX509Token;
 
-    public function init(string filePath) {
-        self.nativeX509Token = newX509Token(filePath);
+    public function init(string filePath) returns error? {
+        self.nativeX509Token = check newX509Token(filePath);
     }
 
     public function addX509Token(UsernameToken usernameToken) = @java:Method {
@@ -27,6 +27,6 @@ public class X509Token {
     } external;
 }
 
-function newX509Token(string filePath) returns handle = @java:Constructor {
+function newX509Token(string filePath) returns handle|error = @java:Constructor {
     'class: "org.wssecurity.X509SecToken"
 } external;
