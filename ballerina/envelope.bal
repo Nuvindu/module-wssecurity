@@ -25,13 +25,35 @@ public class Envelope {
     boolean isTransportBinding = false;
     private string publicKey = "";
     private string privateKey = "";
+    private string signatureAlgorithm = RSA;
+    private string encryptionAlgorithm = AES_128_GCM;
 
     public function init(string xmlPayload) returns error? {
         self.document = check new (xmlPayload);
         self.wsSecHeader = check new (self.document);
     }
 
+    public function setSignatureAlgorithm(string signatureAlgorithm) {
+        self.signatureAlgorithm = signatureAlgorithm;
+    }
+
+    public function getSignatureAlgorithm() returns string {
+        return self.signatureAlgorithm;
+    }
+
+    public function setEncryptionAlgorithm(string encryptionAlgorithm) {
+        self.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    public function getEncryptionAlgorithm() returns string {
+        return self.encryptionAlgorithm;
+    }
+
     public function setKey(string publicKey) {
+        UsernameData? utData = self.userData;
+        if utData !is () {
+            utData.publicKeyPath = publicKey;
+        }
         self.publicKey = publicKey;
     }
 
@@ -40,6 +62,10 @@ public class Envelope {
     }
 
     public function setPrivateKey(string privateKey) {
+        UsernameData? utData = self.userData;
+        if utData !is () {
+            utData.privateKeyPath = privateKey;
+        }
         self.privateKey = privateKey;
     }
 
@@ -56,7 +82,7 @@ public class Envelope {
     }
 
     public function addUsernameToken(string username, string password, string passwordType, string authType = NONE) {
-        self.usernameToken = new (self.wsSecHeader);
+        self.usernameToken = new (self.wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
         self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
     }
 
@@ -64,26 +90,22 @@ public class Envelope {
         self.x509Token = check new("/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt");
         if self.usernameToken !is () {
             (<X509Token>self.x509Token).addX509Token(<UsernameToken>self.usernameToken);
+        } else {
+            return error("Username Token does not exist.");
         }
     }
 
-    public function addSymmetricBinding(string alias, string password, string publicKey, string? certPath = ()) returns error? {
-        self.setKey("/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem");
+    public function addSymmetricBinding(string alias, string password, string symmetricKey) returns error? {
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
-        if certPath !is () {
-            _ = check self.addX509Token(certPath);
-        }
+        self.setKey(symmetricKey);
         self.isSymmetricBinding = true;
     }
 
-    public function addAsymmetricBinding(string alias, string password, string privateKey, 
-                                         string publicKey, string? certPath = ()) returns error? {
-        self.setKey(publicKey);
-        self.setPrivateKey(privateKey);
+    public function addAsymmetricBinding(string alias, string password, string privateKeyPath, 
+                                         string publicKeyPath) returns error? {
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
-        if certPath !is () {
-            _ = check self.addX509Token(certPath);
-        }
+        self.setKey(publicKeyPath);
+        self.setPrivateKey(privateKeyPath);
         self.isAsymmetricBinding = true;
     }
 
@@ -104,13 +126,13 @@ public class Envelope {
 
         if self.isSymmetricBinding {
             if ut !is () && utData != () {
-                return check ut.addUsernameTokenWithKey(utData.username, utData.password, utData.pwType, 
-                                                        self.getKey(), SYMMETRIC_SIGN_AND_ENCRYPT);
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.privateKeyPath,
+                                                                  utData?.publicKeyPath, SYMMETRIC_SIGN_AND_ENCRYPT);
             }
         } else if self.isAsymmetricBinding {
             if ut !is () && utData != () {
-                return check ut.addUsernameTokenWithAsymmetricKey(utData.username, utData.password, utData.pwType, 
-                                                                  self.getPrivateKey(), self.getKey(), 
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, 
+                                                                  utData?.privateKeyPath, utData?.publicKeyPath, 
                                                                   ASYMMETRIC_SIGN_AND_ENCRYPT);
             }
         } else if self.isTransportBinding {
@@ -118,11 +140,11 @@ public class Envelope {
                 output = check tsT.addTimestamp();
             }
             if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData.authType);
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
             }
 
         } else if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData.authType);
+                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
         }
         if tsT !is () {
             output = check tsT.addTimestamp();

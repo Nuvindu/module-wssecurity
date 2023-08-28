@@ -16,6 +16,8 @@
 public type UsernameData record {
     string username;
     string password;
+    string? privateKeyPath?;
+    string? publicKeyPath?;
     string pwType;
     string authType;
 };

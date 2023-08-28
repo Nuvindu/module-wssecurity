@@ -1,30 +1,13 @@
-// Copyright (c) 2023, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-//
-// WSO2 Inc. licenses this file to you under the Apache License,
-// Version 2.0 (the "License"); you may not use this file except
-// in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing,
-// software distributed under the License is distributed on an
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.  See the License for the
-// specific language governing permissions and limitations
-// under the License.
 package org.wssecurity;
 
-import io.ballerina.runtime.api.utils.StringUtils;
-import io.ballerina.runtime.api.values.BHandle;
-import io.ballerina.runtime.api.values.BObject;
-import io.ballerina.runtime.api.values.BString;
 import org.apache.wss4j.common.WSEncryptionPart;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.common.util.UsernameTokenUtil;
 import org.apache.wss4j.dom.WSDocInfo;
 import org.apache.wss4j.dom.handler.RequestData;
+import org.apache.wss4j.dom.message.WSSecDKEncrypt;
 import org.apache.wss4j.dom.message.WSSecSignature;
+import org.apache.wss4j.dom.message.WSSecUsernameToken;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
 import org.w3c.dom.Document;
 
@@ -34,19 +17,14 @@ import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
 
-public class Signature {
-    private String signatureAlgorithm;
-//    private RequestData reqData;
-    public Signature(BString signatureAlgorithm) {
-        this.signatureAlgorithm = signatureAlgorithm.getValue();
-    }
+public class WSSecurityUtils {
 
-    protected String getSignatureAlgorithm() {
-        return signatureAlgorithm;
-    }
-
-    protected void setSignatureAlgorithm(String signatureAlgorithm) {
-        this.signatureAlgorithm = signatureAlgorithm;
+    public Document encryptEnv(WSSecUsernameToken usernameToken, String encAlgo,
+                               byte[] rawKey) throws WSSecurityException {
+        WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
+        encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
+        //        usernameToken.prependToHeader();
+        return encryptionBuilder.build(rawKey);
     }
 
     public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
@@ -68,7 +46,6 @@ public class Signature {
         sign.setSecretKey(deriveSecretKey(reqData, usernameToken, key));
         sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
         sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-//        TODO - Add support for different signature methods
         sign.setSignatureAlgorithm(algorithm);
         if (usernameToken.getX509SecToken() != null) {
             sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
@@ -90,11 +67,5 @@ public class Signature {
                     .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
         }
         return secretKey;
-    }
-
-    public static void setSignatureAlgorithm(BObject signature, BString signatureAlgorithm) {
-        BHandle handle = (BHandle) signature.get(StringUtils.fromString(Constants.NATIVE_SIGNATURE));
-        Signature signatureObj = (Signature) handle.getValue();
-        signatureObj.setSignatureAlgorithm(signatureAlgorithm.getValue());
     }
 }

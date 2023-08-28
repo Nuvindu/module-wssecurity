@@ -18,27 +18,18 @@ import ballerina/jballerina.java;
 public class UsernameToken {
     private handle nativeUT;
 
-    public function init(WSSecurityHeader wsSecHeader) {
-        self.nativeUT = newToken(wsSecHeader);
+    public function init(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) {
+        self.nativeUT = newToken(wsSecHeader, signatureAlgorithm, encryptionAlgorithm);
     }
 
-    public function addUsernameToken(string username, string password, 
-                                     string pwType, string authType = NONE) returns string|error = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
-    } external;
-
-    public function addUsernameTokenWithKey(string username, string password, string pwType,
-                                                string privateKey, string authType = NONE) returns string|error = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
-    } external;
-
-        public function addUsernameTokenWithAsymmetricKey(string username, string password, string pwType,
-                                                          string privateKey, string publicKey, string authType = NONE)
-                                                          returns string|error = @java:Method {
+    public function addUsernameToken(string username, string password, string pwType,
+                                     string? privateKey, string? publicKey, string authType = NONE)
+                                     returns string|error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;
 }
 
-function newToken(WSSecurityHeader wsSecHeader) returns handle = @java:Constructor {
+function newToken(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) 
+    returns handle = @java:Constructor {
     'class: "org.wssecurity.UsernameToken"
 } external;

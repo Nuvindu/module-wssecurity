@@ -32,12 +32,18 @@ public class Constants {
 
     public static final String NATIVE_SEC_HEADER = "nativeSecHeader";
 
+    public static final String NATIVE_REQUEST = "nativeRequest";
+
     public static final String NATIVE_TS_TOKEN = "nativeTimestampToken";
 
     public static final String NATIVE_UT = "nativeUT";
 
     public static final String NATIVE_DOCUMENT = "nativeDocumentBuilder";
 
+    public static final String NATIVE_SIGNATURE = "nativeSignature";
+
     public static final String X509 = "X.509";
+
+    public static final String RSA = "RSA";
 
 }

@@ -15,7 +15,6 @@
 // under the License.
 
 // import ballerina/io;
-import ballerina/io;
 import ballerina/test;
 
 function assertSignatureWithX509(string buildToken) {
@@ -136,13 +135,12 @@ function testUsernameTokenWithX509Signature() returns error? {
     test:assertEquals(x509Token, ());
 
     string buildToken = check env.generateEnvelope();
-    // io:println(buildToken);
-
     assertSignatureWithX509(buildToken);
+    // io:println(buildToken);
 }
 
 @test:Config {
-    groups: ["username_token", "signature"]
+    groups: ["username_token", "signature", "d"]
 }
 function testUsernameTokenWithSignature() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -197,7 +195,7 @@ function testUsernameTokenWithSignatureAndEncryption() returns error? {
 
     assertSignatureWithoutX509(buildToken);
     assertEncryptedPart(buildToken);
-    io:println(buildToken);
+    // io:println(buildToken);
 }
 
 @test:Config {
@@ -230,13 +228,16 @@ function testUsernameTokenWithX509SignatureAndEncryption() returns error? {
 }
 function testUsernameTokenWithSymmetricBindingWithX509() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-
+    string x509certPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
     Envelope env = check new(xmlPayload);
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 
-    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", "EWJHEF23RJ4", "wss40.properties");
+    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", x509certPath);
     test:assertEquals(symmetricBinding, ());
+
+    error? x509Token = env.addX509Token(x509certPath);
+    test:assertEquals(x509Token, ());
 
     string buildToken = check env.generateEnvelope();
     // io:println(buildToken);
@@ -246,16 +247,17 @@ function testUsernameTokenWithSymmetricBindingWithX509() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "symmetric_binding", "d"]
+    groups: ["username_token", "signature", "symmetric_binding"]
 }
 function testUsernameTokenWithSymmetricBinding() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
 
+    string symmetricKeyPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
     Envelope env = check new(xmlPayload);
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 
-    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", "EWJHEF23RJ4");
+    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", symmetricKeyPath);
     test:assertEquals(symmetricBinding, ());
 
     string buildToken = check env.generateEnvelope();
@@ -272,10 +274,10 @@ function testUsernameTokenWithAsymmetricBinding() returns error? {
     Envelope env = check new(xmlPayload);
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
-    string publicKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/publickey.cer";
-    string privateKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
+    string publicKeyPath = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/publickey.cer";
+    string privateKeyPath = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
 
-    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKey, publicKey);
+    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKeyPath, publicKeyPath);
     test:assertEquals(asymmetricBinding, ());
 
     string buildToken = check env.generateEnvelope();
@@ -293,21 +295,25 @@ function testUsernameTokenWithAsymmetricBindingWithX509() returns error? {
     error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 
-    string publicKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/publickey.cer";
-    string privateKey = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
+    string publicKeyPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
+    string privateKeyPath = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/wss40_1.pem";
 
-    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKey, publicKey, "wss40.properties");
+    error? asymmetricBinding = env.addAsymmetricBinding("wss40", "security", privateKeyPath, publicKeyPath);
     test:assertEquals(asymmetricBinding, ());
 
+    error? x509Token = env.addX509Token(publicKeyPath);
+    test:assertEquals(x509Token, ());
+
     string buildToken = check env.generateEnvelope();
-    assertSignatureWithoutX509(buildToken);
+    // io:println(buildToken);
+    assertSignatureWithX509(buildToken);
     assertEncryptedPart(buildToken);
 }
 
 @test:Config {
     groups: ["username_token", "signature", "transport_binding"]
 }
-function testUsernameTokenWithTranportBinding() returns error? {
+function testUsernameTokenWithTransportBinding() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     string username = "user";
     string password = "password";
