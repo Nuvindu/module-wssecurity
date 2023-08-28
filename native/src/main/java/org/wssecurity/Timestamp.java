@@ -41,7 +41,7 @@ public class Timestamp {
         Timestamp timestampObj = (Timestamp) handle.getValue();
         WSSecTimestamp timestampBuilder = timestampObj.getTimestamp();
         try {
-            return StringUtils.fromString(DocBuilder.convertDocumentToString(timestampBuilder.build()));
+            return StringUtils.fromString(DocumentBuilder.convertDocumentToString(timestampBuilder.build()));
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

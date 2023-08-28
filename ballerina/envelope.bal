@@ -25,10 +25,10 @@ public class Envelope {
     boolean isTransportBinding = false;
     private string publicKey = "";
     private string privateKey = "";
-    private string signatureAlgorithm = RSA;
+    private string signatureAlgorithm = HMAC_SHA1;
     private string encryptionAlgorithm = AES_128_GCM;
 
-    public function init(string xmlPayload) returns error? {
+    public function init(string xmlPayload) returns Error? {
         self.document = check new (xmlPayload);
         self.wsSecHeader = check new (self.document);
     }
@@ -73,7 +73,7 @@ public class Envelope {
         return self.privateKey;
     }
 
-    public function addSecurityHeader() returns error? {
+    public function addSecurityHeader() returns Error? {
         return self.wsSecHeader.insertSecHeader();
     }
 
@@ -86,7 +86,7 @@ public class Envelope {
         self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
     }
 
-    public function addX509Token(string certificatePath) returns error? {
+    public function addX509Token(string certificatePath) returns Error? {
         self.x509Token = check new("/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt");
         if self.usernameToken !is () {
             (<X509Token>self.x509Token).addX509Token(<UsernameToken>self.usernameToken);
@@ -95,14 +95,14 @@ public class Envelope {
         }
     }
 
-    public function addSymmetricBinding(string alias, string password, string symmetricKey) returns error? {
+    public function addSymmetricBinding(string alias, string password, string symmetricKey) returns Error? {
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
         self.setKey(symmetricKey);
         self.isSymmetricBinding = true;
     }
 
     public function addAsymmetricBinding(string alias, string password, string privateKeyPath, 
-                                         string publicKeyPath) returns error? {
+                                         string publicKeyPath) returns Error? {
         _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
         self.setKey(publicKeyPath);
         self.setPrivateKey(privateKeyPath);
@@ -110,7 +110,7 @@ public class Envelope {
     }
 
     public function addTransportBinding(string username, string password, string passwordType, 
-                                        boolean addTimestamp = false, int timeToLive = 300) returns error? {
+                                        boolean addTimestamp = false, int timeToLive = 300) returns Error? {
         _ = self.addUsernameToken(username, password, passwordType);
         if addTimestamp {
             _ = self.addTimestampToken(timeToLive);
@@ -118,7 +118,7 @@ public class Envelope {
         self.isTransportBinding = true;
     }
 
-    public function generateEnvelope() returns string|error {
+    public function generateEnvelope() returns string|Error {
         string output = "";
         UsernameToken? ut = self.usernameToken;
         UsernameData? utData = self.userData;

@@ -18,11 +18,11 @@ public enum types {
     ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT"
 }
 
-public enum AuthenticationType {
-    NONE = "NONE",
-    SIGN = "SIGNATURE",
-    ENCRYPT = "ENCRYPT",
-    SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT"
+public enum AuthType {
+    NONE,
+    SIGN,
+    ENCRYPT,
+    SIGN_AND_ENCRYPT
 }
 
 public enum PasswordTypes {
@@ -39,7 +39,11 @@ public enum BindingType {
 public enum SignatureAlgorithms {
     RSA = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
     RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-    RSA_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+    RSA_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+    HMAC_SHA1 = "http://www.w3.org/2000/09/xmldsig#hmac-sha1",
+    HMAC_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha256",
+    HMAC_SHA384 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha384",
+    HMAC_SHA512 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha512"
 }
 
 public enum EncryptionTypes {

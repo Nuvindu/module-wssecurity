@@ -18,11 +18,11 @@ import ballerina/jballerina.java;
 public class WSSecurityHeader {
     private handle nativeSecHeader;
 
-    public function init(Document document) returns error? {
+    public function init(Document document) returns Error? {
         self.nativeSecHeader = newSecHeader(document);
     }
 
-    public function insertSecHeader() returns error? = @java:Method {
+    public function insertSecHeader() returns Error? = @java:Method {
         'class: "org.wssecurity.WSSecurityHeader"
     } external;
 }

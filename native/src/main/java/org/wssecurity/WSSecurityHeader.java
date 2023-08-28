@@ -22,6 +22,8 @@ import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.message.WSSecHeader;
 import org.w3c.dom.Document;
 
+import static org.wssecurity.Utils.createError;
+
 public class WSSecurityHeader {
     private final WSSecHeader wsSecHeader;
 
@@ -29,7 +31,7 @@ public class WSSecurityHeader {
 
     public WSSecurityHeader(BObject documentBuilder) {
         BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
-        DocBuilder docBuilder = (DocBuilder) handle.getValue();
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
         this.wsSecHeader = new WSSecHeader(docBuilder.getNativeDocument());
         this.document = docBuilder.getNativeDocument();
     }
@@ -42,9 +44,13 @@ public class WSSecurityHeader {
         return wsSecHeader;
     }
 
-    public static void insertSecHeader(BObject secHeader) throws WSSecurityException {
+    public static void insertSecHeader(BObject secHeader) {
         BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(Constants.NATIVE_SEC_HEADER));
         WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
-        wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
+        try {
+            wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
+        } catch (WSSecurityException e) {
+            throw createError(e.getMessage());
+        }
     }
 }

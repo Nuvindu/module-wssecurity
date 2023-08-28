@@ -13,4 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-public type WSSecurityError distinct error;
+
+# Represents any error related to the wssecurity module.
+public type Error distinct error;

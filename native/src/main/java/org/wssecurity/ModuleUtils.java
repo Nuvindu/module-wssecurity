@@ -13,20 +13,21 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/jballerina.java;
+package org.wssecurity;
 
-public class X509Token {
-    private handle nativeX509Token;
+import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.Module;
+public class ModuleUtils {
 
-    public function init(string filePath) returns Error? {
-        self.nativeX509Token = check newX509Token(filePath);
+    private static Module module;
+
+    private ModuleUtils() {}
+
+    public static void setModule(Environment environment) {
+        module = environment.getCurrentModule();
     }
 
-    public function addX509Token(UsernameToken usernameToken) = @java:Method {
-        'class: "org.wssecurity.X509SecToken"
-    } external;
+    public static Module getModule() {
+        return module;
+    }
 }
-
-function newX509Token(string filePath) returns handle|Error = @java:Constructor {
-    'class: "org.wssecurity.X509SecToken"
-} external;

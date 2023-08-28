@@ -56,18 +56,11 @@ public class UsernameToken {
     private final WSSecUsernameToken usernameToken;
     private String signAlgo;
     private String encAlgo;
-    private final Signature signature;
-
-    private final Encryption encryption;
     private final Document document;
     private X509SecToken x509SecToken = null;
 
     protected Document getDocument() {
         return document;
-    }
-
-    protected Signature getSignature() {
-        return signature;
     }
 
     public UsernameToken(BObject wsSecurityHeader, BString signatureAlgo, BString encryptionAlgo) {
@@ -76,9 +69,8 @@ public class UsernameToken {
         this.usernameToken = new WSSecUsernameToken(securityHeader.getWsSecHeader());
         this.signAlgo = signatureAlgo.getValue();
         this.encAlgo = encryptionAlgo.getValue();
-        this.signature = new Signature(signatureAlgo);
         this.document = securityHeader.getDocument();
-        this.encryption = new Encryption(encryptionAlgo.getValue());
+//        this.encryption = new Encryption(encryptionAlgo.getValue());
     }
 
     protected WSSecUsernameToken getUsernameToken() {
@@ -93,9 +85,9 @@ public class UsernameToken {
         return encAlgo;
     }
 
-    public Encryption getEncryption() {
-        return encryption;
-    }
+//    public Encryption getEncryption() {
+//        return encryption;
+//    }
 
     protected void setX509Token(X509SecToken x509SecToken) {
         this.x509SecToken =  x509SecToken;
@@ -151,7 +143,6 @@ public class UsernameToken {
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         byte[] salt = UsernameTokenUtil.generateSalt(true);
         Document xmlDocument;
-        Encryption encryption;
         try {
             switch (authType.getValue()) {
                 case Constants.NONE -> {
@@ -165,28 +156,26 @@ public class UsernameToken {
                 case Constants.ENCRYPT -> {
                     setUTChildElements(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
                     usernameToken.build();
-                    encryption = usernameTokenObj.getEncryption();
-                    xmlDocument = encryption.encryptEnv(usernameToken, salt);
+                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(), salt);
                 }
                 case Constants.SIGN_AND_ENCRYPT -> {
                     addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, null);
-                    encryption = usernameTokenObj.getEncryption();
-                    xmlDocument = encryption.encryptEnv(usernameToken, salt);
+                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(), salt);
                 }
                 case Constants.SYMMETRIC_SIGN_AND_ENCRYPT -> {
                     addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, usernameTokenObj.getPublicKey(String.valueOf(publicKey)));
-                    encryption = new Encryption(WSConstants.AES_128);
-                    xmlDocument = encryption.encryptEnv(usernameToken, usernameTokenObj
-                            .getPublicKey(String.valueOf(publicKey)).getEncoded());
+                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(),
+                                                             usernameTokenObj.getPublicKey(String.valueOf(publicKey))
+                                                                     .getEncoded());
                 }
                 case Constants.ASYMMETRIC_SIGN_AND_ENCRYPT -> {
                     addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(), pwType.getValue(),
                                           salt, usernameTokenObj.getPrivateKey(String.valueOf(privateKey)));
-                    encryption = usernameTokenObj.getEncryption();
-                    xmlDocument = encryption.encryptEnv(usernameToken, usernameTokenObj
-                            .getPublicKey(String.valueOf(publicKey)).getEncoded());
+                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(),
+                                                             usernameTokenObj.getPublicKey(String.valueOf(publicKey))
+                                                                     .getEncoded());
                 }
                 default -> {
                     return null;
@@ -208,13 +197,13 @@ public class UsernameToken {
         setUTChildElements(usernameToken, passwordType, username, password);
         usernameToken.prepare(salt);
         if (key != null) {
-            usernameTokenObj.getSignature().buildSignature(reqData,
-                    usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj,
-                                                                     key, WSConstants.HMAC_SHA384));
+            WSSecurityUtils.buildSignature(reqData,
+                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
+                                                                     key, usernameTokenObj.getSignAlgo()));
         } else {
-            usernameTokenObj.getSignature().buildSignature(reqData,
-                    usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj, null,
-                                                                     WSConstants.HMAC_SHA256));
+            WSSecurityUtils.buildSignature(reqData,
+                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj, null,
+                            usernameTokenObj.getSignAlgo()));
         }
         return usernameToken.build(salt);
     }

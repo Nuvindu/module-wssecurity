@@ -18,16 +18,16 @@ import ballerina/jballerina.java;
 public class Document {
     private handle nativeDocumentBuilder;
 
-    public function init(string xmlPayload) returns error? {
+    public function init(string xmlPayload) returns Error? {
         self.nativeDocumentBuilder = check newDocument(xmlPayload);
     }
 
-    public function getDocument() returns string|error = @java:Method {
-        'class: "org.wssecurity.DocBuilder"
+    public function getDocument() returns string|Error = @java:Method {
+        'class: "org.wssecurity.DocumentBuilder"
     } external;
 
 }
 
-function newDocument(string xmlPayload) returns handle|error = @java:Constructor {
-    'class: "org.wssecurity.DocBuilder"
+function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {
+    'class: "org.wssecurity.DocumentBuilder"
 } external;

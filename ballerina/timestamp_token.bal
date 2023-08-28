@@ -21,7 +21,7 @@ public class TimestampToken {
         self.nativeTimestampToken = newTimestamp(wsSecHeader, timeToLive);
     }
 
-    public function addTimestamp() returns string|error = @java:Method {
+    public function addTimestamp() returns string|Error = @java:Method {
         'class: "org.wssecurity.Timestamp"
     } external;
 }

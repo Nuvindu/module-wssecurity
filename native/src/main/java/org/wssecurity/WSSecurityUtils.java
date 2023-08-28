@@ -19,15 +19,15 @@ import javax.xml.crypto.dsig.Reference;
 
 public class WSSecurityUtils {
 
-    public Document encryptEnv(WSSecUsernameToken usernameToken, String encAlgo,
-                               byte[] rawKey) throws WSSecurityException {
+    public static Document encryptEnv(WSSecUsernameToken usernameToken, String encAlgo,
+                                      byte[] rawKey) throws WSSecurityException {
         WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
         encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
         //        usernameToken.prependToHeader();
         return encryptionBuilder.build(rawKey);
     }
 
-    public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
+    public static void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
         List<WSEncryptionPart> parts;
         parts = new ArrayList<>(1);
         Document doc = reqData.getSecHeader().getSecurityHeaderElement().getOwnerDocument();
@@ -37,13 +37,13 @@ public class WSSecurityUtils {
         reqData.getSignatureValues().add(sign.getSignatureValue());
     }
 
-    public WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                           Key key, String algorithm) throws WSSecurityException {
+    public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
+                                                  Key key, String algorithm) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
         sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(deriveSecretKey(reqData, usernameToken, key));
+        sign.setSecretKey(WSSecurityUtils.deriveSecretKey(reqData, usernameToken, key));
         sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
         sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
         sign.setSignatureAlgorithm(algorithm);

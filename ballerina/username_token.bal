@@ -24,7 +24,7 @@ public class UsernameToken {
 
     public function addUsernameToken(string username, string password, string pwType,
                                      string? privateKey, string? publicKey, string authType = NONE)
-                                     returns string|error = @java:Method {
+                                     returns string|Error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;
 }

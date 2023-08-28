@@ -23,7 +23,7 @@ function testTimestampToken() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     
     Envelope env = check new(xmlPayload);
-    error? securityHeader = env.addSecurityHeader();
+    Error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
 
     env.addTimestampToken(600);
