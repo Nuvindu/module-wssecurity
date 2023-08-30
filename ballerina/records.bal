@@ -13,11 +13,20 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-public type UsernameData record {
+
+# Represents the type of the data a username token can hold.
+#
+# + username - the authorization username  
+# + password - the authorization password 
+# + privateKeyPath - the key path for the client's private key 
+# + publicKeyPath - the key path for the shared public key  
+# + pwType - type of the password (TEXT, DIGEST)
+# + authType - the authorization type for the SOAP Envelope
+public type UserData record {
     string username;
     string password;
     string? privateKeyPath?;
     string? publicKeyPath?;
-    string pwType;
-    string authType;
+    PasswordType pwType;
+    AuthType authType;
 };

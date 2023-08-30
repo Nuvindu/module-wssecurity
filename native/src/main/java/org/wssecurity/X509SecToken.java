@@ -1,3 +1,18 @@
+// Copyright (c) 2023, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+//
+// WSO2 Inc. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 package org.wssecurity;
 
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -38,7 +53,7 @@ public class X509SecToken  {
     }
 
     public static void addX509Token(BObject x509Token, BObject userToken) {
-        BHandle handle = (BHandle) x509Token.get(StringUtils.fromString("nativeX509Token"));
+        BHandle handle = (BHandle) x509Token.get(StringUtils.fromString(Constants.NATIVE_X509_TOKEN));
         X509SecToken x509SecToken = (X509SecToken) handle.getValue();
         handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
         UsernameToken usernameToken = (UsernameToken) handle.getValue();

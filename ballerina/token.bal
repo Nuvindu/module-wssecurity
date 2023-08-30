@@ -14,22 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/jballerina.java;
-public class TimestampToken {
-    *Token;
-
-    private handle nativeTimestampToken;
-
-    public function init(WSSecurityHeader wsSecHeader, int timeToLive) {
-        self.'type = TIMESTAMP_TOKEN;
-        self.nativeTimestampToken = newTimestamp(wsSecHeader, timeToLive);
-    }
-
-    public function addTimestamp() returns string|Error = @java:Method {
-        'class: "org.wssecurity.Timestamp"
-    } external;
-}
-
-function newTimestamp(WSSecurityHeader wsSecHeader, int timeToLive) returns handle = @java:Constructor {
-    'class: "org.wssecurity.Timestamp"
-} external;
+# Represents the interface for web service security tokens.
+#
+# + 'type - the type of the security token
+public type Token distinct object {
+    public string 'type;
+};

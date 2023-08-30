@@ -16,14 +16,41 @@
 import ballerina/jballerina.java;
 
 public class UsernameToken {
-    private handle nativeUT;
+    *Token;
 
-    public function init(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) {
-        self.nativeUT = newToken(wsSecHeader, signatureAlgorithm, encryptionAlgorithm);
+    private handle nativeUT;
+    private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
+    private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
+
+    public function init(WSSecurityHeader wsSecHeader, SignatureAlgorithm? signatureAlgorithm = (), 
+                         EncryptionAlgorithm? encryptionAlgorithm = ()) {
+        self.'type = USERNAME_TOKEN;
+        if signatureAlgorithm !is () {
+            self.signatureAlgorithm = signatureAlgorithm;
+        }
+        if encryptionAlgorithm !is () {
+            self.encryptionAlgorithm = encryptionAlgorithm;
+        }
+        self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
     }
 
+    public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
+        self.signatureAlgorithm = signatureAlgorithm;
+    }
+
+    public function getSignatureAlgorithm() returns SignatureAlgorithm {
+        return self.signatureAlgorithm;
+    }
+
+    public function setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+        self.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
+        return self.encryptionAlgorithm;
+    }
     public function addUsernameToken(string username, string password, string pwType,
-                                     string? privateKey, string? publicKey, string authType = NONE)
+                                     string? privateKey, string? publicKey, AuthType authType = NONE)
                                      returns string|Error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;

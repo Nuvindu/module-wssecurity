@@ -22,6 +22,8 @@ public class Constants {
 
     public static final String SIGNATURE = "SIGNATURE";
     public static final String ENCRYPT = "ENCRYPT";
+
+    public static final String DECRYPT = "DECRYPT";
     public static final String SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT";
 
     public static final String SYMMETRIC_SIGN_AND_ENCRYPT = "SYMMETRIC_SIGN_AND_ENCRYPT";
@@ -32,7 +34,7 @@ public class Constants {
 
     public static final String NATIVE_SEC_HEADER = "nativeSecHeader";
 
-    public static final String NATIVE_REQUEST = "nativeRequest";
+    public static final String NATIVE_X509_TOKEN = "nativeX509Token";
 
     public static final String NATIVE_TS_TOKEN = "nativeTimestampToken";
 

@@ -16,9 +16,11 @@
 import ballerina/jballerina.java;
 
 public class X509Token {
+    *Token;
     private handle nativeX509Token;
 
     public function init(string filePath) returns Error? {
+        self.'type = X509_TOKEN;
         self.nativeX509Token = check newX509Token(filePath);
     }
 

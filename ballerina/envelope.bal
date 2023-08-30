@@ -13,64 +13,46 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 public class Envelope {
     private Document document;
     private WSSecurityHeader wsSecHeader;
     private UsernameToken? usernameToken = ();
     private TimestampToken? timestampToken = ();
-    private UsernameData? userData = ();
-    private X509Token? x509Token = ();
-    boolean isSymmetricBinding = false;
-    boolean isAsymmetricBinding = false;
-    boolean isTransportBinding = false;
-    private string publicKey = "";
-    private string privateKey = "";
-    private string signatureAlgorithm = HMAC_SHA1;
-    private string encryptionAlgorithm = AES_128_GCM;
+    private UserData? userData = ();
+    WSSPolicy[] policies = [];
 
     public function init(string xmlPayload) returns Error? {
         self.document = check new (xmlPayload);
         self.wsSecHeader = check new (self.document);
     }
 
-    public function setSignatureAlgorithm(string signatureAlgorithm) {
-        self.signatureAlgorithm = signatureAlgorithm;
+    public function setUTSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
+        UsernameToken? ut = self.usernameToken;
+        if ut !is () {
+            ut.setSignatureAlgorithm(signatureAlgorithm);
+    }
     }
 
-    public function getSignatureAlgorithm() returns string {
-        return self.signatureAlgorithm;
+    public function setUTEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+        UsernameToken? ut = self.usernameToken;
+        if ut !is () {
+            ut.setEncryptionAlgorithm(encryptionAlgorithm);
     }
-
-    public function setEncryptionAlgorithm(string encryptionAlgorithm) {
-        self.encryptionAlgorithm = encryptionAlgorithm;
-    }
-
-    public function getEncryptionAlgorithm() returns string {
-        return self.encryptionAlgorithm;
     }
 
     public function setKey(string publicKey) {
-        UsernameData? utData = self.userData;
+        UserData? utData = self.userData;
         if utData !is () {
             utData.publicKeyPath = publicKey;
         }
-        self.publicKey = publicKey;
-    }
-
-    public function getKey() returns string {
-        return self.publicKey;
     }
 
     public function setPrivateKey(string privateKey) {
-        UsernameData? utData = self.userData;
+        UserData? utData = self.userData;
         if utData !is () {
             utData.privateKeyPath = privateKey;
         }
-        self.privateKey = privateKey;
-    }
-
-    public function getPrivateKey() returns string {
-        return self.privateKey;
     }
 
     public function addSecurityHeader() returns Error? {
@@ -78,80 +60,113 @@ public class Envelope {
     }
 
     public function addTimestampToken(int timeToLive) {
+        // self.insertWSSPolicyToArray(TIMESTAMP_TOKEN);
         self.timestampToken = new (self.wsSecHeader, timeToLive);
     }
 
-    public function addUsernameToken(string username, string password, string passwordType, string authType = NONE) {
-        self.usernameToken = new (self.wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
-        self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
-    }
-
-    public function addX509Token(string certificatePath) returns Error? {
-        self.x509Token = check new("/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt");
-        if self.usernameToken !is () {
-            (<X509Token>self.x509Token).addX509Token(<UsernameToken>self.usernameToken);
-        } else {
-            return error("Username Token does not exist.");
+    public function addUTSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
+        UsernameToken? ut = self.usernameToken;
+        if ut !is () {
+            ut.setSignatureAlgorithm(signatureAlgorithm);
         }
     }
 
-    public function addSymmetricBinding(string alias, string password, string symmetricKey) returns Error? {
-        _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
-        self.setKey(symmetricKey);
-        self.isSymmetricBinding = true;
+    public function addUTEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+        UsernameToken? ut = self.usernameToken;
+        if ut !is () {
+            ut.setEncryptionAlgorithm(encryptionAlgorithm);
+        }
+    }
+
+    public function insertWSSPolicyToArray(WSSPolicy wssPolicy) {
+        int? index = self.policies.indexOf(wssPolicy);
+        if index !is () {
+            _ = self.policies.remove(index);
+        }
+        self.policies.push(wssPolicy);
+    }
+
+    public function addUsernameToken(string username, string password, 
+                                     PasswordType passwordType, AuthType authType = NONE) {
+        self.insertWSSPolicyToArray(USERNAME_TOKEN);
+        self.usernameToken = new (self.wsSecHeader);
+        self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
+    }
+
+    public function addX509Token(string|X509Token x509certToken) returns Error? {
+        UsernameToken? ut = self.usernameToken;
+        X509Token x509Token;
+        if x509certToken is string {
+            x509Token = check new(x509certToken);
+        } else {
+            x509Token = x509certToken;
+        }
+        if ut !is () {
+            x509Token.addX509Token(ut);
+        } else {
+            return error("Username Token does not exist.", 
+                         error("Currently, X509 token is depended on the username token"));
+        }
+    }
+
+    public function addSymmetricBinding(string alias, string password, string symmetricKeyPath) returns Error? {
+        _ = self.addUsernameToken(alias, password, TEXT);
+        self.setKey(symmetricKeyPath);
+        self.insertWSSPolicyToArray(SYMMETRIC_BINDING);
+    }
+
+    public function removeWSSecurityPolicy(WSSPolicy wssPolicy) returns Error? {
+        int? index = self.policies.indexOf(wssPolicy);
+        if index is () {
+            return error("The WSS Policy have not been applied yet.");
+        }
+        _ = self.policies.remove(index);
     }
 
     public function addAsymmetricBinding(string alias, string password, string privateKeyPath, 
                                          string publicKeyPath) returns Error? {
-        _ = self.addUsernameToken(alias, password, SIGN_AND_ENCRYPT);
+        _ = self.addUsernameToken(alias, password, DIGEST);
         self.setKey(publicKeyPath);
         self.setPrivateKey(privateKeyPath);
-        self.isAsymmetricBinding = true;
+        self.insertWSSPolicyToArray(ASYMMETRIC_BINDING);
     }
 
-    public function addTransportBinding(string username, string password, string passwordType, 
-                                        boolean addTimestamp = false, int timeToLive = 300) returns Error? {
-        _ = self.addUsernameToken(username, password, passwordType);
-        if addTimestamp {
-            _ = self.addTimestampToken(timeToLive);
+    // public function addTransportBinding(string username, string password, string passwordType, 
+    //                                     boolean addTimestamp = false, int timeToLive = 300) returns Error? {
+    //     _ = self.addUsernameToken(username, password, passwordType);
+    //     if addTimestamp {
+    //         _ = self.addTimestampToken(timeToLive);
+    //     }
+    //     self.isTransportBinding = true;
+    // }
+
+    public function insertSecurityPolicyHeaders(UsernameToken token, UserData utData, WSSPolicy wssPolicy) returns string|Error {
+        match wssPolicy {
+            SYMMETRIC_BINDING => {
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.privateKeyPath,
+                                                    utData?.publicKeyPath, SYMMETRIC_SIGN_AND_ENCRYPT);
+            }
+            ASYMMETRIC_BINDING => {
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, 
+                                                    utData?.privateKeyPath, utData?.publicKeyPath, 
+                                                    ASYMMETRIC_SIGN_AND_ENCRYPT);
+            }
+            _ => {
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
+            }
         }
-        self.isTransportBinding = true;
     }
 
     public function generateEnvelope() returns string|Error {
-        string output = "";
         UsernameToken? ut = self.usernameToken;
-        UsernameData? utData = self.userData;
+        UserData? utData = self.userData;
         TimestampToken? tsT = self.timestampToken;
-
-        if self.isSymmetricBinding {
-            if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.privateKeyPath,
-                                                                  utData?.publicKeyPath, SYMMETRIC_SIGN_AND_ENCRYPT);
-            }
-        } else if self.isAsymmetricBinding {
-            if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, 
-                                                                  utData?.privateKeyPath, utData?.publicKeyPath, 
-                                                                  ASYMMETRIC_SIGN_AND_ENCRYPT);
-            }
-        } else if self.isTransportBinding {
-            if tsT !is () {
-                output = check tsT.addTimestamp();
-            }
-            if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
-            }
-
-        } else if ut !is () && utData != () {
-                return check ut.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
+        if tsT is TimestampToken {
+            return tsT.addTimestamp();
+        }    
+        if ut is UsernameToken && utData !is () {
+            return self.insertSecurityPolicyHeaders(ut, utData, self.policies[self.policies.length()-1]);
         }
-        if tsT !is () {
-            output = check tsT.addTimestamp();
-        }
-        if output == "" {
-            return error("WS Security Policy headers are not set.");
-        }        
-        return output;
+        return error("WS Security Policy headers are not set.");
     }
 }

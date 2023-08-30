@@ -51,6 +51,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import static org.wssecurity.Utils.createError;
+
 public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
@@ -84,10 +86,6 @@ public class UsernameToken {
     public String getEncAlgo() {
         return encAlgo;
     }
-
-//    public Encryption getEncryption() {
-//        return encryption;
-//    }
 
     protected void setX509Token(X509SecToken x509SecToken) {
         this.x509SecToken =  x509SecToken;
@@ -153,6 +151,10 @@ public class UsernameToken {
                     xmlDocument = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, null);
                 }
+                case Constants.DECRYPT -> {
+                    WSSecurityUtils.decryptEnv(usernameTokenObj, usernameTokenObj.getEncAlgo(), salt);
+                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(), salt);
+                }
                 case Constants.ENCRYPT -> {
                     setUTChildElements(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
                     usernameToken.build();
@@ -178,12 +180,12 @@ public class UsernameToken {
                                                                      .getEncoded());
                 }
                 default -> {
-                    return null;
+                    return createError("Given ws security policy is currently not supported");
                 }
             }
             return convertDocumentToString(xmlDocument);
         } catch (Exception e) {
-            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+            return createError(e.getMessage());
         }
     }
 

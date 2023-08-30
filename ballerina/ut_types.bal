@@ -13,40 +13,41 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-public enum types {
-    SYMMETRIC_SIGN_AND_ENCRYPT = "SYMMETRIC_SIGN_AND_ENCRYPT",
-    ASYMMETRIC_SIGN_AND_ENCRYPT = "ASYMMETRIC_SIGN_AND_ENCRYPT"
-}
-
 public enum AuthType {
     NONE,
-    SIGN,
+    SIGNATURE,
     ENCRYPT,
-    SIGN_AND_ENCRYPT
+    DECRYPT,
+    SIGN_AND_ENCRYPT,
+    ASYMMETRIC_SIGN_AND_ENCRYPT,
+    SYMMETRIC_SIGN_AND_ENCRYPT
 }
 
-public enum PasswordTypes {
-    TEXT = "TEXT",
-    DIGEST = "DIGEST"
+public enum PasswordType {
+    TEXT,
+    DIGEST
 }
 
-public enum BindingType {
-    TRANSPORT = "TransportBinding",
-    SYMMETRIC = "SymmetricBinding",
-    ASYMMETRIC = "AsymmetricBinding"
+public enum WSSPolicy {
+    SYMMETRIC_BINDING,
+    ASYMMETRIC_BINDING,
+    TRANSPORT_BINDING,
+    USERNAME_TOKEN,
+    TIMESTAMP_TOKEN,
+    X509_TOKEN
 }
 
-public enum SignatureAlgorithms {
-    RSA = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-    RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-    RSA_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+public enum SignatureAlgorithm {
+    // RSA = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+    // RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+    // RSA_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
     HMAC_SHA1 = "http://www.w3.org/2000/09/xmldsig#hmac-sha1",
     HMAC_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha256",
     HMAC_SHA384 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha384",
     HMAC_SHA512 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha512"
 }
 
-public enum EncryptionTypes {
+public enum EncryptionAlgorithm {
     AES_128 = "http://www.w3.org/2001/04/xmlenc#aes128-cbc",
     AES_256 = "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
     AES_192 = "http://www.w3.org/2001/04/xmlenc#aes192-cbc",
