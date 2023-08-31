@@ -41,19 +41,19 @@ public class Envelope {
     }
     }
 
-    public function setKey(string publicKey) {
-        UserData? utData = self.userData;
-        if utData !is () {
-            utData.publicKeyPath = publicKey;
-        }
-    }
+    // public function setKey(string publicKey) {
+    //     UserData? utData = self.userData;
+    //     if utData !is () {
+    //         utData.publicKeyPath = publicKey;
+    //     }
+    // }
 
-    public function setPrivateKey(string privateKey) {
-        UserData? utData = self.userData;
-        if utData !is () {
-            utData.privateKeyPath = privateKey;
-        }
-    }
+    // public function setPrivateKey(string privateKey) {
+    //     UserData? utData = self.userData;
+    //     if utData !is () {
+    //         utData.privateKeyPath = privateKey;
+    //     }
+    // }
 
     public function addSecurityHeader() returns Error? {
         return self.wsSecHeader.insertSecHeader();
@@ -111,7 +111,7 @@ public class Envelope {
 
     public function addSymmetricBinding(string alias, string password, string symmetricKeyPath) returns Error? {
         _ = self.addUsernameToken(alias, password, TEXT);
-        self.setKey(symmetricKeyPath);
+        // self.setKey(symmetricKeyPath);
         self.insertWSSPolicyToArray(SYMMETRIC_BINDING);
     }
 
@@ -126,11 +126,18 @@ public class Envelope {
     public function addAsymmetricBinding(string alias, string password, string privateKeyPath, 
                                          string publicKeyPath) returns Error? {
         _ = self.addUsernameToken(alias, password, DIGEST);
-        self.setKey(publicKeyPath);
-        self.setPrivateKey(privateKeyPath);
+        // self.setKey(publicKeyPath);
+        // self.setPrivateKey(privateKeyPath);
         self.insertWSSPolicyToArray(ASYMMETRIC_BINDING);
     }
 
+    public function setEncryptedData(byte[] encdata) {
+        UserData? utData = self.userData;
+        if utData !is () {
+            utData.encData = encdata;
+        }
+        self.userData = utData;
+    }
     // public function addTransportBinding(string username, string password, string passwordType, 
     //                                     boolean addTimestamp = false, int timeToLive = 300) returns Error? {
     //     _ = self.addUsernameToken(username, password, passwordType);
@@ -143,18 +150,26 @@ public class Envelope {
     public function insertSecurityPolicyHeaders(UsernameToken token, UserData utData, WSSPolicy wssPolicy) returns string|Error {
         match wssPolicy {
             SYMMETRIC_BINDING => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.privateKeyPath,
-                                                    utData?.publicKeyPath, SYMMETRIC_SIGN_AND_ENCRYPT);
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.encData,
+                                                    utData?.signValue, SYMMETRIC_SIGN_AND_ENCRYPT);
             }
             ASYMMETRIC_BINDING => {
                 return check token.addUsernameToken(utData.username, utData.password, utData.pwType, 
-                                                    utData?.privateKeyPath, utData?.publicKeyPath, 
+                                                    utData?.encData, utData?.signValue, 
                                                     ASYMMETRIC_SIGN_AND_ENCRYPT);
             }
             _ => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, (), (), utData.authType);
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.encData,
+                                                    utData?.signValue, utData.authType);
             }
         }
+    }
+    public function getEncData() returns byte[]? {
+        UsernameToken? ut = self.usernameToken;
+        if ut is UsernameToken {
+            return ut.getEncryptedData();
+        }
+        return;
     }
 
     public function generateEnvelope() returns string|Error {

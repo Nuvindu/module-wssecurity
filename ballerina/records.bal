@@ -25,8 +25,8 @@
 public type UserData record {
     string username;
     string password;
-    string? privateKeyPath?;
-    string? publicKeyPath?;
+    byte[] encData = [];
+    byte[] signValue = [];
     PasswordType pwType;
     AuthType authType;
 };

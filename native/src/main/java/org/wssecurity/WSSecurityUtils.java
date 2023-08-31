@@ -33,8 +33,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import java.security.Key;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import javax.crypto.SecretKey;
@@ -76,8 +76,39 @@ public class WSSecurityUtils {
                                       byte[] rawKey) throws WSSecurityException {
         WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
         encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
+        Document doc = encryptionBuilder.build(rawKey);
+//        String text = "http://www.w3.org/2001/04/xmlenc#";
+//        NodeList encryptedDataNodes =
+//                doc.getElementsByTagNameNS(text, "EncryptedData");
+//        Element encryptedDataElement = (Element) encryptedDataNodes.item(0);
+
+//        Element cipherDataElement =
+//                (Element) doc.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherValue")
+//                        .item(0);
+//        cipherDataElement.getFirstChild().setNodeValue("qeKDCZF26xM4lPFxTwuFn7Lo1zqim9");
         //        usernameToken.prependToHeader();
-        return encryptionBuilder.build(rawKey);
+        return doc;
+    }
+
+    public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
+                                                  byte[] key, String algorithm) throws WSSecurityException {
+        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
+        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
+        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
+        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
+        usernameToken.getUsernameToken().addDerivedKey(Constants.ITERATION);
+        byte [] secretKey = usernameToken.getUsernameToken()
+                .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
+        sign.setSecretKey(secretKey);
+//        sign.setSecretKey(key);
+        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
+        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
+        sign.setSignatureAlgorithm(algorithm);
+        if (usernameToken.getX509SecToken() != null) {
+            sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
+        }
+        sign.prepare(usernameToken.getCryptoProperties());
+        return sign;
     }
 
     public static void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
@@ -90,35 +121,44 @@ public class WSSecurityUtils {
         reqData.getSignatureValues().add(sign.getSignatureValue());
     }
 
-    public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                                  Key key, String algorithm) throws WSSecurityException {
-        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(WSSecurityUtils.deriveSecretKey(reqData, usernameToken, key));
-        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
-        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-        sign.setSignatureAlgorithm(algorithm);
-        if (usernameToken.getX509SecToken() != null) {
-            sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
-        }
-        sign.prepare(usernameToken.getCryptoProperties());
-        return sign;
+    public static void setSignatureValue(Document doc, byte[] signature) {
+        NodeList digestValueList = doc.getElementsByTagName("ds:DigestValue");
+        digestValueList.item(0).getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(signature));
     }
 
-    private static byte[] deriveSecretKey(RequestData reqData,
-                                          UsernameToken usernameToken, Key key) throws WSSecurityException {
-        byte[] secretKey;
-        if (key != null) {
-            secretKey = key.getEncoded();
-        } else if (usernameToken.getX509SecToken() != null) {
-            secretKey = usernameToken.getX509SecToken().getX509Certificate().getPublicKey().getEncoded();
-        } else {
-            usernameToken.getUsernameToken().addDerivedKey(Constants.ITERATION);
-            secretKey = usernameToken.getUsernameToken()
-                    .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
-        }
-        return secretKey;
+    public static byte[] getSignatureValue(Document doc) {
+        NodeList digestValueList = doc.getElementsByTagName("ds:DigestValue");
+        String encryptedText = digestValueList.item(0).getFirstChild().getNodeValue();
+        return Base64.getDecoder().decode(encryptedText);
     }
+
+    public static void setEncryptedData(Document doc, byte[] encryptedData) {
+        String nameSpaceURI = "http://www.w3.org/2001/04/xmlenc#";
+        String cipherValue = "CipherValue";
+        Element cipherDataElement = (Element) doc.getElementsByTagNameNS(nameSpaceURI, cipherValue).item(0);
+        cipherDataElement.getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(encryptedData));
+    }
+
+    public static byte[] getEncryptedData(Document doc) {
+        String nameSpaceURI = "http://www.w3.org/2001/04/xmlenc#";
+        String cipherValue = "CipherValue";
+        Element cipherDataElement = (Element) doc.getElementsByTagNameNS(nameSpaceURI, cipherValue).item(0);
+        String encryptedText = cipherDataElement.getFirstChild().getNodeValue();
+        return Base64.getDecoder().decode(encryptedText);
+    }
+
+//    private static byte[] deriveSecretKey(RequestData reqData,
+//                                          UsernameToken usernameToken, Key key) throws WSSecurityException {
+//        byte[] secretKey;
+//        if (key != null) {
+//            secretKey = key.getEncoded();
+//        } else if (usernameToken.getX509SecToken() != null) {
+//            secretKey = usernameToken.getX509SecToken().getX509Certificate().getPublicKey().getEncoded();
+//        } else {
+//            usernameToken.getUsernameToken().addDerivedKey(Constants.ITERATION);
+//            secretKey = usernameToken.getUsernameToken()
+//                    .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
+//        }
+//        return secretKey;
+//    }
 }

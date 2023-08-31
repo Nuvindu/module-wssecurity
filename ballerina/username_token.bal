@@ -50,8 +50,12 @@ public class UsernameToken {
         return self.encryptionAlgorithm;
     }
     public function addUsernameToken(string username, string password, string pwType,
-                                     string? privateKey, string? publicKey, AuthType authType = NONE)
+                                     byte[] encData, byte[] signValue, AuthType authType = NONE)
                                      returns string|Error = @java:Method {
+        'class: "org.wssecurity.UsernameToken"
+    } external;
+
+    public function getEncryptedData() returns byte[] = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;
 }
