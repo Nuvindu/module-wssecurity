@@ -15,9 +15,11 @@
 // under the License.
 import ballerina/random;
 import ballerina/crypto;
+import ballerina/jballerina.java;
 
 public class Encryption {
 
+    private handle nativeEncryption;
     private byte[16] key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -33,22 +35,73 @@ public class Encryption {
         } on fail var e {
         	return error(e.message());
         }
+        self.nativeEncryption = newEncryption();
     }
-    public function encryptData(string dataString) returns byte[]|Error {
+    public function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm, 
+                                crypto:PublicKey? publicKey = ()) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
-	        return check crypto:encryptAesCbc(data, self.key, self.initialVector);
+            match encryptionAlgorithm {
+                AES_128 => {
+                    return check crypto:encryptAesCbc(data, self.key, self.initialVector);
+                }
+                AES_128_GCM => {
+                    return check crypto:encryptAesGcm(data, self.key, self.initialVector);
+                }
+                RSA_ECB => {
+                    if publicKey  is () {
+                        return error("Missing key!");
+                    }
+                    return check crypto:encryptRsaEcb(data,publicKey);
+                }
+                _ => {
+                    return error("Encryption Algorithm is not supported");
+                }
+            }
+	        
         } on fail var e {
         	return error(e.message());
         }
     }
 
-    public function decryptData(byte[] cipherText) returns byte[]|Error {
+    public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm, 
+                                crypto:PrivateKey|crypto:PublicKey? privateKey = ()) returns byte[]|Error {
         do {
-	        return check crypto:decryptAesCbc(cipherText, self.key, self.initialVector);
+            match encryptionAlgorithm {
+                AES_128 => {
+                    return check crypto:decryptAesCbc(cipherText, self.key, self.initialVector);
+                }
+                AES_128_GCM => {
+                    return check crypto:decryptAesGcm(cipherText, self.key, self.initialVector);
+                }
+                RSA_ECB => {
+                    if privateKey is () {
+                        return error("Private Key is not set");
+                    }
+                    return check crypto:decryptRsaEcb(cipherText, privateKey);
+                }
+                _ => {
+                    return error("Decryption Algorithm is not supported");
+                }
+            }
         } on fail var e {
         	return error(e.message());
         }
     }
 
+    public function setEncryptionAlgorithm(string encryptionAlgorithm) = @java:Method {
+        'class: "org.wssecurity.Encryption"
+    } external;
+
+    public function setEncryptedData(byte[] encryptedData) = @java:Method {
+        'class: "org.wssecurity.Encryption"
+    } external;
+
+    public function getEncryptedData() returns byte[] = @java:Method {
+        'class: "org.wssecurity.Encryption"
+    } external;
 }
+
+function newEncryption() returns handle = @java:Constructor {
+    'class: "org.wssecurity.Encryption"
+} external;

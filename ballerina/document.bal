@@ -26,6 +26,9 @@ public class Document {
         'class: "org.wssecurity.DocumentBuilder"
     } external;
 
+    public function getEnvelopeBody() returns string|Error = @java:Method {
+        'class: "org.wssecurity.DocumentBuilder"
+    } external;
 }
 
 function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {

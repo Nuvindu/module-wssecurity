@@ -21,6 +21,7 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -62,6 +63,18 @@ public class DocumentBuilder {
         Document document = docBuilder.getNativeDocument();
         try {
             return StringUtils.fromString(convertDocumentToString(document));
+        } catch (Exception e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
+    }
+
+    public static Object getEnvelopeBody(BObject documentBuilder) {
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
+        Document document = docBuilder.getNativeDocument();
+        NodeList digestValueList = document.getElementsByTagName("soap:Body");
+        try {
+            return StringUtils.fromString(digestValueList.item(0).getFirstChild().getNodeValue());
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

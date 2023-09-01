@@ -55,7 +55,33 @@ public class UsernameToken {
         'class: "org.wssecurity.UsernameToken"
     } external;
 
+    // public function addUTSignAndEncrypt(string username, string password, string pwType,
+    //                                     byte[] encData, byte[] signValue, AuthType authType = NONE)
+    //                                     returns string|Error = @java:Method {
+    //     'class: "org.wssecurity.UsernameToken"
+    // } external;
+
+    // public function addUTSignature(string username, string password, string pwType,
+    //                                byte[] signValue, AuthType authType = NONE)
+    //                                returns string|Error = @java:Method {
+    //     'class: "org.wssecurity.UsernameToken"
+    // } external;
+
+    // public function addUTEncryption(string username, string password, string pwType,
+    //                                  byte[] encData, AuthType authType = NONE)
+    //                                  returns string|Error = @java:Method {
+    //     'class: "org.wssecurity.UsernameToken"
+    // } external;
+
+    // public function addUT(string username, string password, string pwType) returns string|Error = @java:Method {
+    //     'class: "org.wssecurity.UsernameToken"
+    // } external;
+
     public function getEncryptedData() returns byte[] = @java:Method {
+        'class: "org.wssecurity.UsernameToken"
+    } external;
+
+    public function getSignatureData() returns byte[] = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;
 }

@@ -29,7 +29,6 @@ import org.apache.wss4j.dom.engine.WSSConfig;
 import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecUsernameToken;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -143,6 +142,11 @@ public class UsernameToken {
         return ValueCreator.createArrayValue(WSSecurityUtils.getEncryptedData(usernameTokenObj.getDocument()));
     }
 
+    public static BArray getSignatureData(BObject userToken) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        return ValueCreator.createArrayValue(WSSecurityUtils.getSignatureValue(usernameTokenObj.getDocument()));
+    }
     public static Object addUsernameToken(BObject userToken, BString username, BString password,
                                           BString pwType, BArray encryptedData, BArray signatureValue,
                                           BString authType) {
@@ -159,11 +163,8 @@ public class UsernameToken {
                 }
                 case Constants.SIGNATURE -> {
                     xmlDocument = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                            pwType.getValue(), salt, null);
-                }
-                case Constants.DECRYPT -> {
-                    WSSecurityUtils.decryptEnv(usernameTokenObj, usernameTokenObj.getEncAlgo(), salt);
-                    xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(), salt);
+                            pwType.getValue(), salt, signatureValue.getByteArray());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signatureValue.getByteArray());
                 }
                 case Constants.ENCRYPT -> {
                     setUTChildElements(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
@@ -173,8 +174,10 @@ public class UsernameToken {
                 }
                 case Constants.SIGN_AND_ENCRYPT -> {
                     addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                            pwType.getValue(), salt, null);
+                            pwType.getValue(), salt, signatureValue.getByteArray());
                     xmlDocument = WSSecurityUtils.encryptEnv(usernameToken, usernameTokenObj.getEncAlgo(), salt);
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryptedData.getByteArray());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signatureValue.getByteArray());
                 }
                 case Constants.SYMMETRIC_SIGN_AND_ENCRYPT -> {
                     addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
@@ -217,8 +220,8 @@ public class UsernameToken {
                                                      usernameTokenObj.getSignAlgo()));
         }
         Document doc = usernameToken.build(salt);
-        NodeList digestValueList = doc.getElementsByTagName("ds:DigestValue");
-        digestValueList.item(0).getFirstChild().setNodeValue("BnLWgsZS25SmiyLJwA");
+//        NodeList digestValueList = doc.getElementsByTagName("ds:DigestValue");
+//        digestValueList.item(0).getFirstChild().setNodeValue("BnLWgsZS25SmiyLJwA");
         return doc;
     }
 

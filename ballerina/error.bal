@@ -16,3 +16,6 @@
 
 # Represents any error related to the wssecurity module.
 public type Error distinct error;
+
+public const string USERNAME_NOT_SET_ERROR = "Username Token is not set. Currently, " +
+                                             "Username Token is requred to perform the rest of the operation.";

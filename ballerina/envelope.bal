@@ -20,18 +20,22 @@ public class Envelope {
     private UsernameToken? usernameToken = ();
     private TimestampToken? timestampToken = ();
     private UserData? userData = ();
+    private Signature sign;
+    private Encryption encryption;
     WSSPolicy[] policies = [];
 
     public function init(string xmlPayload) returns Error? {
         self.document = check new (xmlPayload);
         self.wsSecHeader = check new (self.document);
+        self.sign = check new();
+        self.encryption = check new();
     }
 
     public function setUTSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
         UsernameToken? ut = self.usernameToken;
         if ut !is () {
             ut.setSignatureAlgorithm(signatureAlgorithm);
-    }
+        }
     }
 
     public function setUTEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
@@ -84,6 +88,30 @@ public class Envelope {
             _ = self.policies.remove(index);
         }
         self.policies.push(wssPolicy);
+    }
+
+    public function addSignature(string signatureAlgorithm, byte[] signature) returns Error? {
+        UserData? utData = self.userData;
+        if utData !is () {
+            if utData.authType == ENCRYPT {
+                utData.authType = SIGN_AND_ENCRYPT;
+            }
+            self.userData = utData;
+        }
+        self.sign.setSignatureAlgorithm(signatureAlgorithm);
+        self.sign.setSignatureValue(signature);
+    }
+
+    public function addEncryption(string encryptionAlgorithm, byte[] encryption) {
+        UserData? utData = self.userData;
+        if utData !is () {
+            if utData.authType == SIGNATURE {
+                utData.authType = SIGN_AND_ENCRYPT;
+            }
+            self.userData = utData;
+        }
+        self.encryption.setEncryptionAlgorithm(encryptionAlgorithm);
+        self.encryption.setEncryptedData(encryption);
     }
 
     public function addUsernameToken(string username, string password, 
@@ -158,9 +186,13 @@ public class Envelope {
                                                     utData?.encData, utData?.signValue, 
                                                     ASYMMETRIC_SIGN_AND_ENCRYPT);
             }
+            UT_SIGNATURE => {
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, [],
+                                                    self.sign.getSignatureValue(), utData.authType);
+            }
             _ => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.encData,
-                                                    utData?.signValue, utData.authType);
+                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, self.encryption.getEncryptedData(),
+                                                    self.sign.getSignatureValue(), utData.authType);
             }
         }
     }
@@ -168,6 +200,14 @@ public class Envelope {
         UsernameToken? ut = self.usernameToken;
         if ut is UsernameToken {
             return ut.getEncryptedData();
+        }
+        return;
+    }
+
+    public function getSignatureData() returns byte[]? {
+        UsernameToken? ut = self.usernameToken;
+        if ut is UsernameToken {
+            return ut.getSignatureData();
         }
         return;
     }
