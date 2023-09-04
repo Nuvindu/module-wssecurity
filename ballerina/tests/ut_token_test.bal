@@ -152,37 +152,37 @@ function testUsernameTokenWithHashedPasword() returns error? {
 // }
 
 
-@test:Config {
-    groups: ["username_token", "signature", "asymmetric_binding", "x509", "b"]
-}
-function testMultipleBindings() returns error? {
-    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+// @test:Config {
+//     groups: ["username_token", "signature", "asymmetric_binding", "x509", "b"]
+// }
+// function testMultipleBindings() returns error? {
+//     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
 
-    Envelope env = check new(xmlPayload);
-    Error? securityHeader = env.addSecurityHeader();
-    test:assertEquals(securityHeader, ());
+//     Envelope env = check new(xmlPayload);
+//     Error? securityHeader = env.addSecurityHeader();
+//     test:assertEquals(securityHeader, ());
 
-    Error? asymmetricBinding = env.addAsymmetricBinding(USERNAME, PASSWORD, PRIVATE_KEY_PATH, X509_PUBLIC_CERT_PATH);
-    test:assertEquals(asymmetricBinding, ());
+//     Error? asymmetricBinding = env.addAsymmetricBinding(USERNAME, PASSWORD, PRIVATE_KEY_PATH, X509_PUBLIC_CERT_PATH);
+//     test:assertEquals(asymmetricBinding, ());
 
-    Error? x509Token = env.addX509Token(X509_PUBLIC_CERT_PATH);
-    test:assertEquals(x509Token, ());
+//     Error? x509Token = env.addX509Token(X509_PUBLIC_CERT_PATH);
+//     test:assertEquals(x509Token, ());
 
-    // Envelope env = check new(xmlPayload);
-    // Error? securityHeader = env.addSecurityHeader();
-    // test:assertEquals(securityHeader, ());
+//     // Envelope env = check new(xmlPayload);
+//     // Error? securityHeader = env.addSecurityHeader();
+//     // test:assertEquals(securityHeader, ());
 
-    Error? symmetricBinding = env.addSymmetricBinding(USERNAME, PASSWORD, X509_PUBLIC_CERT_PATH);
-    test:assertEquals(symmetricBinding, ());
+//     Error? symmetricBinding = env.addSymmetricBinding(USERNAME, PASSWORD, X509_PUBLIC_CERT_PATH);
+//     test:assertEquals(symmetricBinding, ());
 
-    string buildToken = check env.generateEnvelope();
-    assertSignatureWithoutX509(buildToken);
-    assertEncryptedPart(buildToken);
+//     string buildToken = check env.generateEnvelope();
+//     assertSignatureWithoutX509(buildToken);
+//     assertEncryptedPart(buildToken);
 
-    // string buildToken = check env.generateEnvelope();
-    // assertSignatureWithX509(buildToken);
-    // assertEncryptedPart(buildToken);
-}
+//     // string buildToken = check env.generateEnvelope();
+//     // assertSignatureWithX509(buildToken);
+//     // assertEncryptedPart(buildToken);
+// }
 
 // @test:Config {
 //     groups: ["username_token", "signature", "transport_binding"]

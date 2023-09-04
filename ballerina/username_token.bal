@@ -21,25 +21,33 @@ public class UsernameToken {
     private handle nativeUT;
     private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
     private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
+    private string username;
+    private string password;
+    private string passwordType;
 
-    public function init(WSSecurityHeader wsSecHeader, SignatureAlgorithm? signatureAlgorithm = (), 
-                         EncryptionAlgorithm? encryptionAlgorithm = ()) {
+    public function init(WSSecurityHeader wsSecHeader, string username, string password, string passwordType) {
         self.'type = USERNAME_TOKEN;
-        if signatureAlgorithm !is () {
-            self.signatureAlgorithm = signatureAlgorithm;
-        }
-        if encryptionAlgorithm !is () {
-            self.encryptionAlgorithm = encryptionAlgorithm;
-        }
+        self.username = username;
+        self.password = password;
+        self.passwordType = passwordType;
         self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
     }
+
 
     public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
         self.signatureAlgorithm = signatureAlgorithm;
     }
 
-    public function getSignatureAlgorithm() returns SignatureAlgorithm {
-        return self.signatureAlgorithm;
+    public function getUsername() returns string {
+        return self.username;
+    }
+
+    public function getPassword() returns string {
+        return self.password;
+    }
+
+    public function getPasswordType() returns string {
+        return self.passwordType;
     }
 
     public function setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
@@ -49,7 +57,7 @@ public class UsernameToken {
     public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
         return self.encryptionAlgorithm;
     }
-    public function addUsernameToken(string username, string password, string pwType,
+    public function populateHeaderData(string username, string password, string pwType,
                                      byte[] encData, byte[] signValue, AuthType authType = NONE)
                                      returns string|Error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
@@ -68,8 +76,8 @@ public class UsernameToken {
     // } external;
 
     // public function addUTEncryption(string username, string password, string pwType,
-    //                                  byte[] encData, AuthType authType = NONE)
-    //                                  returns string|Error = @java:Method {
+    //                                 byte[] encData, AuthType authType = NONE)
+    //                                 returns string|Error = @java:Method {
     //     'class: "org.wssecurity.UsernameToken"
     // } external;
 

@@ -44,6 +44,8 @@ public class Constants {
 
     public static final String NATIVE_SIGNATURE = "nativeSignature";
 
+    public static final String NATIVE_ENCRYPTION = "nativeEncryption";
+
     public static final String X509 = "X.509";
 
     public static final String RSA = "RSA";

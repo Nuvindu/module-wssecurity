@@ -210,7 +210,7 @@ function testUsernameTokenWithX509SignatureAndEncryption() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "x509", "new"]
+    groups: ["username_token", "signature", "x509"]
 }
 function testUsernameTokenWithX509Signature() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -395,7 +395,7 @@ function testUsernameTokenWithCustomSignatureAndCustomEncryption() returns error
 }
 
 @test:Config {
-    groups: ["username_token", "encryption", "aes_256_gcm", "new"]
+    groups: ["username_token", "encryption", "aes_256_gcm"]
 }
 function testUsernameTokenWithEncryptionAES128GCM() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
@@ -436,7 +436,7 @@ function testUsernameTokenWithEncryptionAES128GCM() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "new"]
+    groups: ["username_token", "signature"]
 }
 function testUsernameTokenWithSignature() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;

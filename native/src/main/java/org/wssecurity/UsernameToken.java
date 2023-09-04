@@ -30,22 +30,13 @@ import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecUsernameToken;
 import org.w3c.dom.Document;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Objects;
 
 import javax.xml.transform.Transformer;
@@ -58,6 +49,10 @@ import static org.wssecurity.Utils.createError;
 public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
+
+    private String username;
+    private String password;
+    private String passwordType;
     private String signAlgo;
     private String encAlgo;
     private final Document document;
@@ -75,6 +70,94 @@ public class UsernameToken {
         this.encAlgo = encryptionAlgo.getValue();
         this.document = securityHeader.getDocument();
 //        this.encryption = new Encryption(encryptionAlgo.getValue());
+    }
+
+    public static void setUsername(BObject userToken, BString username) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setUsername(username.getValue());
+    }
+
+    public static void setPassword(BObject userToken, BString password) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setPassword(password.getValue());
+    }
+
+    public static void setPasswordType(BObject userToken, BString passwordType) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setPasswordType(passwordType.getValue());
+    }
+
+    protected String getUsername() {
+        return username;
+    }
+
+    protected void setUsername(String username) {
+        this.username = username;
+    }
+
+    protected String getPassword() {
+        return password;
+    }
+
+    protected void setPassword(String password) {
+        this.password = password;
+    }
+
+    protected String getPasswordType() {
+        return passwordType;
+    }
+
+    protected void setPasswordType(String passwordType) {
+        this.passwordType = passwordType;
+    }
+
+    private static Result getResult(BObject userToken, BObject encryption, BObject signature) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+        String username = usernameTokenObj.getUsername();
+        String password = usernameTokenObj.getPassword();
+        String passwordType = usernameTokenObj.getPasswordType();
+        Signature signatureObj = null;
+        Encryption encryptionObj = null;
+        if (signature != null) {
+            handle = (BHandle) signature.get(StringUtils.fromString(Constants.NATIVE_SIGNATURE));
+            signatureObj = (Signature) handle.getValue();
+        }
+        if (encryption != null) {
+            handle = (BHandle) encryption.get(StringUtils.fromString(Constants.NATIVE_ENCRYPTION));
+            encryptionObj = (Encryption) handle.getValue();
+        }
+        return new Result(usernameTokenObj, usernameToken, username, password, passwordType, signatureObj,
+                encryptionObj);
+    }
+
+    private record Result(UsernameToken usernameTokenObj, WSSecUsernameToken usernameToken, String username,
+                          String password, String passwordType, Signature signatureObj, Encryption encryptionObj) {
+    }
+
+    public static Document setSignatureHeaderData(UsernameToken usernameTokenObj, String signatureAlgorithm,
+                                                  byte[] salt, byte[] signature) throws Exception {
+        WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+        RequestData reqData = new RequestData();
+        reqData.setSecHeader(usernameToken.getSecurityHeader());
+        reqData.setWssConfig(WSSConfig.getNewInstance());
+        setUTChildElements(usernameToken, usernameTokenObj.getPasswordType(), usernameTokenObj.getUsername(),
+                           usernameTokenObj.getPassword());
+        usernameToken.prepare(salt);
+        if (signature != null) {
+            WSSecurityUtils.buildSignature(reqData,
+                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj, signature, signatureAlgorithm));
+        } else {
+            WSSecurityUtils.buildSignature(reqData,
+                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj, null, signatureAlgorithm));
+        }
+        Document document = usernameToken.build(salt);
+        WSSecurityUtils.setSignatureValue(document, signature);
+        return document;
     }
 
     protected WSSecUsernameToken getUsernameToken() {
@@ -112,29 +195,6 @@ public class UsernameToken {
         return keyFactory.generatePrivate(keySpec);
     }
 
-    public PublicKey getPublicKey(String path) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        FileInputStream publicKeyFileInputStream = new FileInputStream(path);
-        CertificateFactory certificateFactory;
-        try {
-            certificateFactory = CertificateFactory.getInstance(Constants.X509);
-        } catch (CertificateException e) {
-            publicKeyFileInputStream.close();
-            throw new RuntimeException(e);
-        }
-        X509Certificate certificate;
-        try {
-            certificate = (X509Certificate) certificateFactory
-                    .generateCertificate(publicKeyFileInputStream);
-        } catch (CertificateException e) {
-            publicKeyFileInputStream.close();
-            byte[] key = Files.readAllBytes(Paths.get(path));
-            KeyFactory keyFactory = KeyFactory.getInstance(Constants.RSA);
-            X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(key);
-            return keyFactory.generatePublic(x509EncodedKeySpec);
-        }
-        publicKeyFileInputStream.close();
-        return certificate.getPublicKey();
-    }
 
     public static BArray getEncryptedData(BObject userToken) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
@@ -147,7 +207,63 @@ public class UsernameToken {
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         return ValueCreator.createArrayValue(WSSecurityUtils.getSignatureValue(usernameTokenObj.getDocument()));
     }
-    public static Object addUsernameToken(BObject userToken, BString username, BString password,
+
+//    public static Object populateHeaderData(BObject userToken) {
+//        Result result = getResult(userToken, null, null);
+//        try {
+//            setUTChildElements(result.usernameToken(), result.passwordType(), result.username(), result.password());
+//            return result.usernameToken().build();
+//        } catch (Exception e) {
+//            return createError(e.getMessage());
+//        }
+//    }
+
+    public static Object populateHeaderDataWithSignAndEncrypt(BObject userToken,
+                                                              BObject signature, BObject encryption) {
+        Result result = getResult(userToken, encryption, signature);
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+        Document xmlDocument;
+        try {
+            xmlDocument = addSignatureWithToken(result.usernameTokenObj(), result.username(), result.password(),
+                    result.passwordType(), salt, result.signatureObj().getSignatureValue());
+            WSSecurityUtils.setSignatureValue(xmlDocument, result.signatureObj().getSignatureValue());
+            xmlDocument = WSSecurityUtils.encryptEnv(result.usernameToken(),
+                                                     result.encryptionObj().getEncryptionAlgorithm(), salt);
+            WSSecurityUtils.setEncryptedData(xmlDocument, result.encryptionObj().getEncryptedData());
+            return convertDocumentToString(xmlDocument);
+        } catch (Exception e) {
+            return createError(e.getMessage());
+        }
+    }
+
+    public static Object populateHeaderDataWithSignature(BObject userToken, BObject signature) {
+        Result result = getResult(userToken, null, signature);
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+        Document xmlDocument;
+        try {
+            xmlDocument = addSignatureWithToken(result.usernameTokenObj(), result.username(), result.password(),
+                    result.passwordType(), salt, result.signatureObj().getSignatureValue());
+            WSSecurityUtils.setSignatureValue(xmlDocument, result.signatureObj().getSignatureValue());
+            return convertDocumentToString(xmlDocument);
+        } catch (Exception e) {
+            return createError(e.getMessage());
+        }
+    }
+
+    public static Object populateHeaderDataWithEncryption(BObject userToken, BObject encryption) {
+        Result result = getResult(userToken, encryption, null);
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+        Document xmlDocument;
+        try {
+            xmlDocument = WSSecurityUtils.encryptEnv(result.usernameToken(),
+                    result.encryptionObj().getEncryptionAlgorithm(), salt);
+            WSSecurityUtils.setEncryptedData(xmlDocument, result.encryptionObj().getEncryptedData());
+            return convertDocumentToString(xmlDocument);
+        } catch (Exception e) {
+            return createError(e.getMessage());
+        }
+    }
+    public static Object populateHeaderData(BObject userToken, BString username, BString password,
                                           BString pwType, BArray encryptedData, BArray signatureValue,
                                           BString authType) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));

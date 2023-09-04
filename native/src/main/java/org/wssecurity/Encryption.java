@@ -8,8 +8,8 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 
 public class Encryption {
-    public String encryptionAlgorithm = "";
-    public byte[] encryptedData = new byte[0];
+    private String encryptionAlgorithm = "";
+    private byte[] encryptedData = new byte[0];
 
     public static void setEncryptionAlgorithm(BObject encrypt, BString encryptionAlgorithm) {
         BHandle handle = (BHandle) encrypt.get(StringUtils.fromString("nativeEncryption"));
@@ -33,12 +33,12 @@ public class Encryption {
         return encryptionAlgorithm;
     }
 
-    protected void setEncryptionAlgorithm(String encryptionAlgorithm) {
-        this.encryptionAlgorithm = encryptionAlgorithm;
+    protected byte[] getEncryptedData() {
+        return encryptedData;
     }
 
-    protected byte[] getEncrData() {
-        return encryptedData;
+    protected void setEncryptionAlgorithm(String encryptionAlgorithm) {
+        this.encryptionAlgorithm = encryptionAlgorithm;
     }
 
     protected void setEncryptedData(byte[] encryptedData) {

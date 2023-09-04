@@ -35,24 +35,9 @@
 //         return check timestampToken.addTimestamp();
 //     }
 
-//     public function addUsernameToken(string username, string password, string passwordType)returns string|Error  {
-//         UsernameToken usernameToken = new(self.wsSecHeader);
-//         Signature? signature = self.sign;
-//         Encryption? encryption = self.encrypt;
-//         if signature !is () && encryption !is () {
-//             return check usernameToken
-//                 .addUTSignAndEncrypt(username, password, passwordType, 
-//                                      signature.getSignatureValue(), encryption.getEncryptedData());
-//         } else if signature !is () {
-//             return check usernameToken
-//                 .addUTSignature(username, password, passwordType, signature.getSignatureValue());
-//         } else if encryption !is () {
-//             return check usernameToken
-//                 .addUTEncryption(username, password, passwordType, encryption.getEncryptedData());
-//         } else {
-//             return check usernameToken
-//                 .addUT(username, password, passwordType);
-//         }
+//     public function addUsernameToken(string username, string password, string passwordType) {
+//         UsernameToken usernameToken = new(self.wsSecHeader, username, password, passwordType);
+//         self.usernameToken = usernameToken;
 //     }
 
 //     public function addX509Token(string|X509Token x509Cert) returns Error? {
@@ -66,7 +51,7 @@
 //         }
 //     }
 
-//     public function addSignature(SignatureAlgorithm signatureAlgorithm, crypto:PrivateKey key) returns Error?|error {
+//     public function addSignature(SignatureAlgorithm signatureAlgorithm, crypto:PrivateKey key) returns Error? {
 //         if self.usernameToken is () {
 //             return error(USERNAME_NOT_SET_ERROR);
 //         }
@@ -77,7 +62,7 @@
 //         self.sign = sign;
 //     }
 
-//     public function addEncryption(EncryptionAlgorithm encryptionAlgorithm, crypto:PrivateKey|crypto:PublicKey key) returns Error?|error {
+//     public function addEncryption(EncryptionAlgorithm encryptionAlgorithm, crypto:PrivateKey|crypto:PublicKey key) returns Error? {
 //         if self.usernameToken is () {
 //             return error(USERNAME_NOT_SET_ERROR);
 //         }
@@ -88,16 +73,61 @@
 //         self.encrypt = encrypt;
 //     }
 
+//     public function generateEnvelope() returns string|Error {
+//         UsernameToken? usernameToken = self.usernameToken;
+//         Signature? signature = self.sign;
+//         Encryption? encryption = self.encrypt;
+//         if usernameToken is () {
+//             return error(USERNAME_NOT_SET_ERROR);
+//         }
+//         if signature !is () {
+//             return check usernameToken
+//                 .addUsernameToken(usernameToken.getUsername(), usernameToken.getPassword(), 
+//                                      usernameToken.getPasswordType(), signature.getSignatureValue(),
+//                                      [], SIGNATURE);
+//         // } else if signature !is () {
+//         //     return check usernameToken
+//         //         .addUTSignature(usernameToken.getUsername(), usernameToken.getPassword(), 
+//         //                         usernameToken.getPasswordType(), signature.getSignatureValue());
+//         // } else if encryption !is () {
+//         //     return check usernameToken
+//         //         .addUTEncryption(usernameToken.getUsername(), usernameToken.getPassword(), 
+//         //                          usernameToken.getPasswordType(),  encryption.getEncryptedData());
+//         // } else {
+//         //     return check usernameToken
+//         //         .addUT(usernameToken.getUsername(), usernameToken.getPassword(), usernameToken.getPasswordType());
+//         // }
+        
+//         }
+//         return error("qqq");
+//     }
+
 //     public function applyAsymmetricBinding(crypto:PublicKey serverPublicKey, crypto:PrivateKey clientPrivateKey, 
-//                                            SignatureAlgorithm signAlgorithm, EncryptionAlgorithm encAlgorithm) {
-        
+//                                            SignatureAlgorithm signAlgorithm, EncryptionAlgorithm encAlgorithm) 
+//                                            returns Error? {
+//         UsernameToken? usernameToken = self.usernameToken;
+//         if usernameToken is () {
+//             return error(USERNAME_NOT_SET_ERROR);
+//         }
+//         Error? signature = self.addSignature(signAlgorithm, clientPrivateKey);
+//         if signature is Error {
+//             return signature;
+//         }
+//         return self.addEncryption(encAlgorithm, serverPublicKey);
 //     }
 
-//     public function applySymmetricBinding(crypto:PrivateKey sharedSecretKey, SignatureAlgorithm signAlgorithm,
-//                                           EncryptionAlgorithm encAlgorithm) {
-        
+//     public function applySymmetricBinding(crypto:PrivateKey symmetricKey, 
+//                                           SignatureAlgorithm signAlgorithm, EncryptionAlgorithm encAlgorithm) 
+//                                           returns Error? {
+//         UsernameToken? usernameToken = self.usernameToken;
+//         if usernameToken is () {
+//             return error(USERNAME_NOT_SET_ERROR);
+//         }
+//         Error? signature = self.addSignature(signAlgorithm, symmetricKey);
+//         if signature is Error {
+//             return signature;
+//         }
+//         return self.addEncryption(encAlgorithm, symmetricKey);
 //     }
-
-    
 // }
  

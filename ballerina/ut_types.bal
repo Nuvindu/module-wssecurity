@@ -29,13 +29,13 @@ public enum PasswordType {
 }
 
 public enum WSSPolicy {
+    TIMESTAMP_TOKEN,
+    USERNAME_TOKEN,
+    X509_TOKEN,
     SYMMETRIC_BINDING,
     ASYMMETRIC_BINDING,
     TRANSPORT_BINDING,
-    USERNAME_TOKEN,
-    UT_SIGNATURE,
-    TIMESTAMP_TOKEN,
-    X509_TOKEN
+    UT_SIGNATURE
 }
 
 public enum SignatureAlgorithm {

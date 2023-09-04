@@ -8,8 +8,8 @@ import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 
 public class Signature {
-    public String signatureAlgorithm = "";
-    public byte[] signatureValue = new byte[0];
+    private String signatureAlgorithm = "";
+    private byte[] signatureValue = new byte[0];
 
     public static void setSignatureAlgorithm(BObject sign, BString signatureAlgorithm) {
         BHandle handle = (BHandle) sign.get(StringUtils.fromString("nativeSignature"));

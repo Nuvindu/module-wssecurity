@@ -1,3 +1,4 @@
+import ballerina/io;
 // Copyright (c) 2023, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
@@ -19,8 +20,8 @@ public class Envelope {
     private WSSecurityHeader wsSecHeader;
     private UsernameToken? usernameToken = ();
     private TimestampToken? timestampToken = ();
-    private UserData? userData = ();
     private Signature sign;
+    private AuthType policy = NONE;
     private Encryption encryption;
     WSSPolicy[] policies = [];
 
@@ -91,25 +92,27 @@ public class Envelope {
     }
 
     public function addSignature(string signatureAlgorithm, byte[] signature) returns Error? {
-        UserData? utData = self.userData;
-        if utData !is () {
-            if utData.authType == ENCRYPT {
-                utData.authType = SIGN_AND_ENCRYPT;
-            }
-            self.userData = utData;
-        }
+        // UserData? utData = self.userData;
+        // if utData !is () {
+        //     if utData.authType == ENCRYPT {
+        //         utData.authType = SIGN_AND_ENCRYPT;
+        //     } else {
+        //         utData.authType = SIGNATURE;
+        //     }
+        //     self.userData = utData;
+        // }
         self.sign.setSignatureAlgorithm(signatureAlgorithm);
         self.sign.setSignatureValue(signature);
     }
 
     public function addEncryption(string encryptionAlgorithm, byte[] encryption) {
-        UserData? utData = self.userData;
-        if utData !is () {
-            if utData.authType == SIGNATURE {
-                utData.authType = SIGN_AND_ENCRYPT;
-            }
-            self.userData = utData;
-        }
+        // UserData? utData = self.userData;
+        // if utData !is () {
+        //     if utData.authType == SIGNATURE {
+        //         utData.authType = SIGN_AND_ENCRYPT;
+        //     }
+        //     self.userData = utData;
+        // }
         self.encryption.setEncryptionAlgorithm(encryptionAlgorithm);
         self.encryption.setEncryptedData(encryption);
     }
@@ -117,8 +120,9 @@ public class Envelope {
     public function addUsernameToken(string username, string password, 
                                      PasswordType passwordType, AuthType authType = NONE) {
         self.insertWSSPolicyToArray(USERNAME_TOKEN);
-        self.usernameToken = new (self.wsSecHeader);
-        self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
+        self.usernameToken = new (self.wsSecHeader, username, password, passwordType);
+        self.setPolicy(authType);
+        // self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
     }
 
     public function addX509Token(string|X509Token x509certToken) returns Error? {
@@ -159,13 +163,21 @@ public class Envelope {
         self.insertWSSPolicyToArray(ASYMMETRIC_BINDING);
     }
 
-    public function setEncryptedData(byte[] encdata) {
-        UserData? utData = self.userData;
-        if utData !is () {
-            utData.encData = encdata;
-        }
-        self.userData = utData;
+    public function setPolicy(AuthType policy) {
+        self.policy = policy;
     }
+
+    public function getPolicy() returns AuthType {
+        return self.policy;
+    }
+
+    // public function setEncryptedData(byte[] encdata) {
+    //     UserData? utData = self.userData;
+    //     if utData !is () {
+    //         utData.encData = encdata;
+    //     }
+    //     self.userData = utData;
+    // }
     // public function addTransportBinding(string username, string password, string passwordType, 
     //                                     boolean addTimestamp = false, int timeToLive = 300) returns Error? {
     //     _ = self.addUsernameToken(username, password, passwordType);
@@ -175,26 +187,10 @@ public class Envelope {
     //     self.isTransportBinding = true;
     // }
 
-    public function insertSecurityPolicyHeaders(UsernameToken token, UserData utData, WSSPolicy wssPolicy) returns string|Error {
-        match wssPolicy {
-            SYMMETRIC_BINDING => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, utData?.encData,
-                                                    utData?.signValue, SYMMETRIC_SIGN_AND_ENCRYPT);
-            }
-            ASYMMETRIC_BINDING => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, 
-                                                    utData?.encData, utData?.signValue, 
-                                                    ASYMMETRIC_SIGN_AND_ENCRYPT);
-            }
-            UT_SIGNATURE => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, [],
-                                                    self.sign.getSignatureValue(), utData.authType);
-            }
-            _ => {
-                return check token.addUsernameToken(utData.username, utData.password, utData.pwType, self.encryption.getEncryptedData(),
-                                                    self.sign.getSignatureValue(), utData.authType);
-            }
-        }
+    public function insertSecurityPolicyHeaders(UsernameToken token, WSSPolicy wssPolicy) returns string|Error {
+        io:println(self.getPolicy());
+        return check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(), 
+                                              self.encryption.getEncryptedData(), self.sign.getSignatureValue(), self.getPolicy());
     }
     public function getEncData() returns byte[]? {
         UsernameToken? ut = self.usernameToken;
@@ -214,13 +210,13 @@ public class Envelope {
 
     public function generateEnvelope() returns string|Error {
         UsernameToken? ut = self.usernameToken;
-        UserData? utData = self.userData;
+        // UserData? utData = self.userData;
         TimestampToken? tsT = self.timestampToken;
         if tsT is TimestampToken {
             return tsT.addTimestamp();
         }    
-        if ut is UsernameToken && utData !is () {
-            return self.insertSecurityPolicyHeaders(ut, utData, self.policies[self.policies.length()-1]);
+        if ut is UsernameToken {
+            return self.insertSecurityPolicyHeaders(ut, self.policies[self.policies.length()-1]);
         }
         return error("WS Security Policy headers are not set.");
     }
