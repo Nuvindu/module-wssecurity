@@ -31,6 +31,7 @@ public class UsernameToken {
         self.password = password;
         self.passwordType = passwordType;
         self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
+        self.setPassword(password);
     }
 
 
@@ -58,32 +59,14 @@ public class UsernameToken {
         return self.encryptionAlgorithm;
     }
     public function populateHeaderData(string username, string password, string pwType,
-                                     byte[] encData, byte[] signValue, AuthType authType = NONE)
-                                     returns string|Error = @java:Method {
+                                       byte[] encData, byte[] signValue, AuthType authType = NONE)
+                                       returns string|Error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;
 
-    // public function addUTSignAndEncrypt(string username, string password, string pwType,
-    //                                     byte[] encData, byte[] signValue, AuthType authType = NONE)
-    //                                     returns string|Error = @java:Method {
-    //     'class: "org.wssecurity.UsernameToken"
-    // } external;
-
-    // public function addUTSignature(string username, string password, string pwType,
-    //                                byte[] signValue, AuthType authType = NONE)
-    //                                returns string|Error = @java:Method {
-    //     'class: "org.wssecurity.UsernameToken"
-    // } external;
-
-    // public function addUTEncryption(string username, string password, string pwType,
-    //                                 byte[] encData, AuthType authType = NONE)
-    //                                 returns string|Error = @java:Method {
-    //     'class: "org.wssecurity.UsernameToken"
-    // } external;
-
-    // public function addUT(string username, string password, string pwType) returns string|Error = @java:Method {
-    //     'class: "org.wssecurity.UsernameToken"
-    // } external;
+    public function setPassword(string password) = @java:Method {
+        'class: "org.wssecurity.UsernameToken"
+    } external;
 
     public function getEncryptedData() returns byte[] = @java:Method {
         'class: "org.wssecurity.UsernameToken"

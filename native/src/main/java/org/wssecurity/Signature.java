@@ -7,24 +7,26 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 
+import static org.wssecurity.Constants.NATIVE_SIGNATURE;
+
 public class Signature {
     private String signatureAlgorithm = "";
     private byte[] signatureValue = new byte[0];
 
     public static void setSignatureAlgorithm(BObject sign, BString signatureAlgorithm) {
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString("nativeSignature"));
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
         Signature signature = (Signature) handle.getValue();
         signature.setSignatureAlgorithm(signatureAlgorithm.getValue());
     }
 
     public static void setSignatureValue(BObject sign, BArray signatureValue) {
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString("nativeSignature"));
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
         Signature signature = (Signature) handle.getValue();
         signature.setSignatureValue(signatureValue.getByteArray());
     }
 
     public static BArray getSignatureValue(BObject sign) {
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString("nativeSignature"));
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
         Signature signature = (Signature) handle.getValue();
         return ValueCreator.createArrayValue(signature.getSignatureValue());
     }

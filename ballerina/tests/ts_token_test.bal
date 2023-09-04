@@ -28,7 +28,6 @@ function testTimestampToken() returns error? {
 
     env.addTimestampToken(600);
     string generateEnvelope = check env.generateEnvelope();
-    // io:println(generateEnvelope);
     string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
     string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
     string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;

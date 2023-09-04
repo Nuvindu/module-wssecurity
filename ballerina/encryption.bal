@@ -38,7 +38,7 @@ public class Encryption {
         self.nativeEncryption = newEncryption();
     }
     public function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm, 
-                                crypto:PublicKey? publicKey = ()) returns byte[]|Error {
+                                crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
             match encryptionAlgorithm {
@@ -49,10 +49,10 @@ public class Encryption {
                     return check crypto:encryptAesGcm(data, self.key, self.initialVector);
                 }
                 RSA_ECB => {
-                    if publicKey  is () {
+                    if key is () {
                         return error("Missing key!");
                     }
-                    return check crypto:encryptRsaEcb(data,publicKey);
+                    return check crypto:encryptRsaEcb(data, key);
                 }
                 _ => {
                     return error("Encryption Algorithm is not supported");
@@ -65,7 +65,7 @@ public class Encryption {
     }
 
     public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm, 
-                                crypto:PrivateKey|crypto:PublicKey? privateKey = ()) returns byte[]|Error {
+                                crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
         do {
             match encryptionAlgorithm {
                 AES_128 => {
@@ -75,10 +75,10 @@ public class Encryption {
                     return check crypto:decryptAesGcm(cipherText, self.key, self.initialVector);
                 }
                 RSA_ECB => {
-                    if privateKey is () {
+                    if key is () {
                         return error("Private Key is not set");
                     }
-                    return check crypto:decryptRsaEcb(cipherText, privateKey);
+                    return check crypto:decryptRsaEcb(cipherText, key);
                 }
                 _ => {
                     return error("Decryption Algorithm is not supported");

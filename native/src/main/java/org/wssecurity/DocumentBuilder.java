@@ -36,6 +36,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import static org.wssecurity.Constants.NATIVE_DOCUMENT;
+import static org.wssecurity.Constants.SOAP_BODY_TAG;
 import static org.wssecurity.Utils.createError;
 
 public class DocumentBuilder {
@@ -58,7 +60,7 @@ public class DocumentBuilder {
     }
 
     public static Object getDocument(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
         DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
         Document document = docBuilder.getNativeDocument();
         try {
@@ -69,12 +71,12 @@ public class DocumentBuilder {
     }
 
     public static Object getEnvelopeBody(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(Constants.NATIVE_DOCUMENT));
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
         DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
         Document document = docBuilder.getNativeDocument();
-        NodeList digestValueList = document.getElementsByTagName("soap:Body");
+        NodeList digestValueList = document.getElementsByTagName(SOAP_BODY_TAG);
         try {
-            return StringUtils.fromString(digestValueList.item(0).getFirstChild().getNodeValue());
+            return StringUtils.fromString(digestValueList.item(0).getFirstChild().getTextContent());
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

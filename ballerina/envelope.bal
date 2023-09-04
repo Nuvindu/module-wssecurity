@@ -1,4 +1,4 @@
-import ballerina/io;
+import ballerina/crypto;
 // Copyright (c) 2023, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
@@ -23,7 +23,6 @@ public class Envelope {
     private Signature sign;
     private AuthType policy = NONE;
     private Encryption encryption;
-    WSSPolicy[] policies = [];
 
     public function init(string xmlPayload) returns Error? {
         self.document = check new (xmlPayload);
@@ -32,97 +31,37 @@ public class Envelope {
         self.encryption = check new();
     }
 
-    public function setUTSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
-        UsernameToken? ut = self.usernameToken;
-        if ut !is () {
-            ut.setSignatureAlgorithm(signatureAlgorithm);
-        }
-    }
-
-    public function setUTEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-        UsernameToken? ut = self.usernameToken;
-        if ut !is () {
-            ut.setEncryptionAlgorithm(encryptionAlgorithm);
-    }
-    }
-
-    // public function setKey(string publicKey) {
-    //     UserData? utData = self.userData;
-    //     if utData !is () {
-    //         utData.publicKeyPath = publicKey;
-    //     }
-    // }
-
-    // public function setPrivateKey(string privateKey) {
-    //     UserData? utData = self.userData;
-    //     if utData !is () {
-    //         utData.privateKeyPath = privateKey;
-    //     }
-    // }
-
     public function addSecurityHeader() returns Error? {
         return self.wsSecHeader.insertSecHeader();
     }
 
+    public function getEnvelopeBody() returns string|Error {
+        return self.document.getEnvelopeBody();
+    }
+
     public function addTimestampToken(int timeToLive) {
-        // self.insertWSSPolicyToArray(TIMESTAMP_TOKEN);
         self.timestampToken = new (self.wsSecHeader, timeToLive);
     }
 
-    public function addUTSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
-        UsernameToken? ut = self.usernameToken;
-        if ut !is () {
-            ut.setSignatureAlgorithm(signatureAlgorithm);
-        }
+    public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm, 
+                                crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
+        return self.encryption.decryptData(cipherText, encryptionAlgorithm, key);
     }
 
-    public function addUTEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-        UsernameToken? ut = self.usernameToken;
-        if ut !is () {
-            ut.setEncryptionAlgorithm(encryptionAlgorithm);
-        }
-    }
-
-    public function insertWSSPolicyToArray(WSSPolicy wssPolicy) {
-        int? index = self.policies.indexOf(wssPolicy);
-        if index !is () {
-            _ = self.policies.remove(index);
-        }
-        self.policies.push(wssPolicy);
-    }
-
-    public function addSignature(string signatureAlgorithm, byte[] signature) returns Error? {
-        // UserData? utData = self.userData;
-        // if utData !is () {
-        //     if utData.authType == ENCRYPT {
-        //         utData.authType = SIGN_AND_ENCRYPT;
-        //     } else {
-        //         utData.authType = SIGNATURE;
-        //     }
-        //     self.userData = utData;
-        // }
+    public function addSignature(string signatureAlgorithm, byte[] signature) {
         self.sign.setSignatureAlgorithm(signatureAlgorithm);
         self.sign.setSignatureValue(signature);
     }
 
     public function addEncryption(string encryptionAlgorithm, byte[] encryption) {
-        // UserData? utData = self.userData;
-        // if utData !is () {
-        //     if utData.authType == SIGNATURE {
-        //         utData.authType = SIGN_AND_ENCRYPT;
-        //     }
-        //     self.userData = utData;
-        // }
         self.encryption.setEncryptionAlgorithm(encryptionAlgorithm);
         self.encryption.setEncryptedData(encryption);
     }
 
     public function addUsernameToken(string username, string password, 
                                      PasswordType passwordType, AuthType authType = NONE) {
-        self.insertWSSPolicyToArray(USERNAME_TOKEN);
         self.usernameToken = new (self.wsSecHeader, username, password, passwordType);
         self.setPolicy(authType);
-        // self.userData = {username: username, password: password, pwType: passwordType, authType: authType};
     }
 
     public function addX509Token(string|X509Token x509certToken) returns Error? {
@@ -141,28 +80,6 @@ public class Envelope {
         }
     }
 
-    public function addSymmetricBinding(string alias, string password, string symmetricKeyPath) returns Error? {
-        _ = self.addUsernameToken(alias, password, TEXT);
-        // self.setKey(symmetricKeyPath);
-        self.insertWSSPolicyToArray(SYMMETRIC_BINDING);
-    }
-
-    public function removeWSSecurityPolicy(WSSPolicy wssPolicy) returns Error? {
-        int? index = self.policies.indexOf(wssPolicy);
-        if index is () {
-            return error("The WSS Policy have not been applied yet.");
-        }
-        _ = self.policies.remove(index);
-    }
-
-    public function addAsymmetricBinding(string alias, string password, string privateKeyPath, 
-                                         string publicKeyPath) returns Error? {
-        _ = self.addUsernameToken(alias, password, DIGEST);
-        // self.setKey(publicKeyPath);
-        // self.setPrivateKey(privateKeyPath);
-        self.insertWSSPolicyToArray(ASYMMETRIC_BINDING);
-    }
-
     public function setPolicy(AuthType policy) {
         self.policy = policy;
     }
@@ -171,28 +88,7 @@ public class Envelope {
         return self.policy;
     }
 
-    // public function setEncryptedData(byte[] encdata) {
-    //     UserData? utData = self.userData;
-    //     if utData !is () {
-    //         utData.encData = encdata;
-    //     }
-    //     self.userData = utData;
-    // }
-    // public function addTransportBinding(string username, string password, string passwordType, 
-    //                                     boolean addTimestamp = false, int timeToLive = 300) returns Error? {
-    //     _ = self.addUsernameToken(username, password, passwordType);
-    //     if addTimestamp {
-    //         _ = self.addTimestampToken(timeToLive);
-    //     }
-    //     self.isTransportBinding = true;
-    // }
-
-    public function insertSecurityPolicyHeaders(UsernameToken token, WSSPolicy wssPolicy) returns string|Error {
-        io:println(self.getPolicy());
-        return check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(), 
-                                              self.encryption.getEncryptedData(), self.sign.getSignatureValue(), self.getPolicy());
-    }
-    public function getEncData() returns byte[]? {
+    public function getEncryptedData() returns byte[]? {
         UsernameToken? ut = self.usernameToken;
         if ut is UsernameToken {
             return ut.getEncryptedData();
@@ -209,15 +105,84 @@ public class Envelope {
     }
 
     public function generateEnvelope() returns string|Error {
-        UsernameToken? ut = self.usernameToken;
-        // UserData? utData = self.userData;
-        TimestampToken? tsT = self.timestampToken;
-        if tsT is TimestampToken {
-            return tsT.addTimestamp();
+        UsernameToken? uToken = self.usernameToken;
+        TimestampToken? tsToken = self.timestampToken;
+        if tsToken is TimestampToken {
+            return tsToken.addTimestamp();
         }    
-        if ut is UsernameToken {
-            return self.insertSecurityPolicyHeaders(ut, self.policies[self.policies.length()-1]);
+        if uToken is UsernameToken {
+            return check uToken.populateHeaderData(uToken.getUsername(), uToken.getPassword(), uToken.getPasswordType(), 
+                                                   self.encryption.getEncryptedData(), self.sign.getSignatureValue(), self.getPolicy());
         }
-        return error("WS Security Policy headers are not set.");
+        return error("WS Security policy headers are not set.");
+    }
+
+    public function applyTimestampToken(int timeToLive) returns string|Error {                         
+        self.addTimestampToken(timeToLive);
+        return check self.generateEnvelope();
+    }
+
+    public function applyUsernameToken(string alias, string password, PasswordType passwordType, 
+                                       AuthType authType = NONE) returns string|Error {                         
+        self.addUsernameToken(alias, password, passwordType, authType);
+        return self.generateEnvelope();
+    }
+
+    public function applyX509Token(string alias, string password, PasswordType passwordType, 
+                                   string|X509Token x509certToken) returns string|Error {                         
+        self.addUsernameToken(alias, password, passwordType, SIGNATURE);
+        check self.addX509Token(x509certToken);
+        return self.generateEnvelope();
+    }
+
+    public function applyUTSignature(string alias, string password, PasswordType passwordType, SignatureAlgorithm signatureAlgorithm, 
+                                     crypto:PrivateKey key, X509Token? x509Token = ()) returns string|Error {
+        byte[] signedData = check self.sign.signData(check self.getEnvelopeBody(), signatureAlgorithm, key);
+        self.addSignature(signatureAlgorithm, signedData);                           
+        self.addUsernameToken(alias, password, passwordType, SIGNATURE);
+        if x509Token !is () {
+            check self.addX509Token(x509Token);
+        }  
+        return self.generateEnvelope();
+    }
+
+    public function applyUTEncryption(string alias, string password, EncryptionAlgorithm encryptionAlgorithm, 
+                                    crypto:PublicKey|crypto:PrivateKey? key = (), X509Token? x509Token = ()) returns string|Error {
+        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(), encryptionAlgorithm);
+        self.addEncryption(encryptionAlgorithm, encryptData);
+        self.addUsernameToken(alias, password, DIGEST, ENCRYPT);
+        if x509Token !is () {
+            check self.addX509Token(x509Token);
+        }  
+        return self.generateEnvelope();
+    }
+
+    public function applyAsymmetricBinding(string alias, string password, crypto:PrivateKey privateKey, 
+                                           crypto:PublicKey publicKey, EncryptionAlgorithm encAlgo, 
+                                           SignatureAlgorithm signAlgo, X509Token? x509Token = ()) returns string|Error {     
+             
+        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(), encAlgo, publicKey);
+        self.addEncryption(encAlgo, encryptData);
+        byte[] signedData = check self.sign.signData(check self.getEnvelopeBody(), signAlgo, privateKey);
+        self.addSignature(signAlgo, signedData);                           
+        self.addUsernameToken(alias, password, DIGEST, SIGN_AND_ENCRYPT);
+        if x509Token !is () {
+            check self.addX509Token(x509Token);
+        }  
+        return self.generateEnvelope();
+    }
+
+    public function applySymmetricBinding(string alias, string password, crypto:PrivateKey key,
+                                          EncryptionAlgorithm encAlgo, SignatureAlgorithm signAlgo,
+                                          X509Token? x509Token = ()) returns string|Error {                                     
+        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(), encAlgo, key);
+        self.addEncryption(encAlgo, encryptData);
+        byte[] signedData = check self.sign.signData(check self.getEnvelopeBody(), signAlgo, key);
+        self.addSignature(signAlgo, signedData);                           
+        self.addUsernameToken(alias, password, DIGEST, SIGN_AND_ENCRYPT);
+        if x509Token !is () {
+            check self.addX509Token(x509Token);
+        } 
+        return self.generateEnvelope();
     }
 }

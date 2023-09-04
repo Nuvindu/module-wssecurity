@@ -25,7 +25,9 @@ public enum AuthType {
 
 public enum PasswordType {
     TEXT,
-    DIGEST
+    DIGEST,
+    DERIVED_KEY_TEXT,
+    DERIVED_KEY_DIGEST
 }
 
 public enum WSSPolicy {

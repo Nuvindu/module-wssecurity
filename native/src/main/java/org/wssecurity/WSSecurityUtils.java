@@ -17,16 +17,11 @@ package org.wssecurity;
 
 import org.apache.wss4j.common.WSEncryptionPart;
 import org.apache.wss4j.common.ext.WSSecurityException;
-import org.apache.wss4j.common.util.KeyUtils;
-import org.apache.wss4j.dom.WSConstants;
-import org.apache.wss4j.dom.WSDataRef;
-import org.apache.wss4j.dom.WSDocInfo;
-import org.apache.wss4j.dom.engine.WSSConfig;
+import org.apache.wss4j.common.util.UsernameTokenUtil;
 import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecDKEncrypt;
 import org.apache.wss4j.dom.message.WSSecSignature;
 import org.apache.wss4j.dom.message.WSSecUsernameToken;
-import org.apache.wss4j.dom.util.EncryptionUtils;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
 import org.apache.xml.security.Init;
 import org.apache.xml.security.algorithms.JCEMapper;
@@ -38,77 +33,47 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import javax.crypto.SecretKey;
 import javax.xml.crypto.dsig.Reference;
+
+import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
+import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
+import static org.wssecurity.Constants.CIPHER_VALUE_TAG;
+import static org.wssecurity.Constants.ITERATION;
+import static org.wssecurity.Constants.NAMESPACE_URI_ENC;
+import static org.wssecurity.Constants.SIGNATURE_VALUE_TAG;
 
 public class WSSecurityUtils {
 
-    public static WSDataRef decryptEnv(UsernameToken usernameToken, String encAlgo,
-                                             byte[] rawKey) throws WSSecurityException {
-
-        WSSConfig.init();
-//        WSSecurityEngine engine = new WSSecurityEngine();
-//
-//        RequestData requestData = new RequestData();
-        String text = "http://www.w3.org/2001/04/xmlenc#";
-        NodeList encryptedDataNodes = usernameToken
-                .getDocument()
-                .getElementsByTagNameNS(text, "EncryptedData");
-        Element encryptedDataElement = (Element) encryptedDataNodes.item(0);
-
-//        Element cipherDataElement = (Element) usernameToken
-//                .getDocument()
-//                .getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherData")
-//                .item(0);
-
-        // Convert the <xenc:CipherData> content into an org.w3c.dom.Element
-//        Element encryptedElement = (Element) cipherDataElement.getFirstChild();
-
-//        WSHandlerResult decryptedElement = engine.processSecurityHeader(usernameToken.getDocument(), requestData);
-        String dataRefURI = "ED-66c68d42-349a-4e97-8e2a-92430af86e3d";
-
-        SecretKey secretKey = KeyUtils.prepareSecretKey(WSConstants.AES_128_GCM, rawKey);
-        WSDataRef wsDataRef = EncryptionUtils
-                .decryptEncryptedData(usernameToken.getDocument(), dataRefURI,
-                        encryptedDataElement, secretKey, encAlgo, null);
-        return wsDataRef;
-    }
-    public static Document encryptEnv(WSSecUsernameToken usernameToken, String encAlgo,
-                                      byte[] rawKey) throws WSSecurityException {
+    public static Document encryptEnvelope(WSSecUsernameToken usernameToken, String encAlgo,
+                                           byte[] rawKey) throws WSSecurityException {
         Init.init();
         JCEMapper.registerDefaultAlgorithms();
         WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
         encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
-        Document doc = encryptionBuilder.build(rawKey);
-//        String text = "http://www.w3.org/2001/04/xmlenc#";
-//        NodeList encryptedDataNodes =
-//                doc.getElementsByTagNameNS(text, "EncryptedData");
-//        Element encryptedDataElement = (Element) encryptedDataNodes.item(0);
-
-//        Element cipherDataElement =
-//                (Element) doc.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherValue")
-//                        .item(0);
-//        cipherDataElement.getFirstChild().setNodeValue("qeKDCZF26xM4lPFxTwuFn7Lo1zqim9");
-        //        usernameToken.prependToHeader();
-        return doc;
+        return encryptionBuilder.build(rawKey);
     }
 
     public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                                  byte[] key, String algorithm) throws WSSecurityException {
+                                                  String algorithm, boolean useDerivedKey) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
         sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-//        usernameToken.getUsernameToken().addDerivedKey(Constants.ITERATION);
-//        byte [] secretKey = usernameToken.getUsernameToken()
-//                .getDerivedKey(UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC()));
-        sign.setSecretKey(key);
-//        sign.setSecretKey(key);
-        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
-        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
+        byte[] salt = UsernameTokenUtil.generateSalt(true);
+        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(), salt, ITERATION);
+        if (useDerivedKey) {
+            usernameToken.getUsernameToken().addDerivedKey(ITERATION);
+            sign.setSecretKey(key);
+        } else {
+            sign.setSecretKey(key);
+        }
+        sign.setWsDocInfo(reqData.getWsDocInfo());
         sign.setSignatureAlgorithm(algorithm);
         if (usernameToken.getX509SecToken() != null) {
+            sign.setKeyIdentifierType(X509_KEY_IDENTIFIER);
             sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
+        } else {
+            sign.setKeyIdentifierType(CUSTOM_KEY_IDENTIFIER);
         }
         sign.prepare(usernameToken.getCryptoProperties());
         return sign;
@@ -125,29 +90,27 @@ public class WSSecurityUtils {
     }
 
     public static void setSignatureValue(Document doc, byte[] signature) {
-        NodeList digestValueList = doc.getElementsByTagName("ds:SignatureValue");
+        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
         digestValueList.item(0).getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(signature));
     }
 
     public static byte[] getSignatureValue(Document doc) {
-        NodeList digestValueList = doc.getElementsByTagName("ds:SignatureValue");
+        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
         String encryptedText = digestValueList.item(0).getFirstChild().getNodeValue();
         return Base64.getDecoder().decode(encryptedText);
     }
 
     public static void setEncryptedData(Document doc, byte[] encryptedData) {
-        String nameSpaceURI = "http://www.w3.org/2001/04/xmlenc#";
-        String cipherValue = "CipherValue";
-        Element cipherDataElement = (Element) doc.getElementsByTagNameNS(nameSpaceURI, cipherValue).item(0);
+
+        Element cipherDataElement = (Element) doc
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
         cipherDataElement.getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(encryptedData));
     }
 
     public static byte[] getEncryptedData(Document doc) {
-        String nameSpaceURI = "http://www.w3.org/2001/04/xmlenc#";
-        String cipherValue = "CipherValue";
-        Element cipherDataElement = (Element) doc.getElementsByTagNameNS(nameSpaceURI, cipherValue).item(0);
+        Element cipherDataElement = (Element) doc
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
         String encryptedText = cipherDataElement.getFirstChild().getNodeValue();
         return Base64.getDecoder().decode(encryptedText);
     }
-
 }
