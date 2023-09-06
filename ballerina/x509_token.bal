@@ -26,10 +26,10 @@ public class X509Token {
     }
 
     public function addX509Token(UsernameToken usernameToken) = @java:Method {
-        'class: "org.wssecurity.X509SecToken"
+        'class: "org.wssec.X509SecToken"
     } external;
 }
 
 function newX509Token(string filePath) returns handle|Error = @java:Constructor {
-    'class: "org.wssecurity.X509SecToken"
+    'class: "org.wssec.X509SecToken"
 } external;

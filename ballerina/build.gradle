@@ -34,7 +34,7 @@ buildscript {
 
 description = 'Ballerina - Web Service Securities'
 
-def packageName = "wssecurity"
+def packageName = "wssec"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
 def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")

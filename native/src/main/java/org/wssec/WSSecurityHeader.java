@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
@@ -23,9 +23,9 @@ import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.message.WSSecHeader;
 import org.w3c.dom.Document;
 
-import static org.wssecurity.Constants.NATIVE_DOCUMENT;
-import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
-import static org.wssecurity.Utils.createError;
+import static org.wssec.Constants.NATIVE_DOCUMENT;
+import static org.wssec.Constants.NATIVE_SEC_HEADER;
+import static org.wssec.Utils.createError;
 
 public class WSSecurityHeader {
     private final WSSecHeader wsSecHeader;

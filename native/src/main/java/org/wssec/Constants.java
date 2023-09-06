@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 public class Constants {
     public static final int ITERATION = 1000;

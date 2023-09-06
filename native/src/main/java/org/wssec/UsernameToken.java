@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.creators.ValueCreator;
@@ -41,19 +41,19 @@ import javax.xml.transform.stream.StreamResult;
 
 import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_DIGEST;
 import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_TEXT;
-import static org.wssecurity.Constants.DERIVED_KEY_DIGEST;
-import static org.wssecurity.Constants.DERIVED_KEY_TEXT;
-import static org.wssecurity.Constants.DIGEST;
-import static org.wssecurity.Constants.EMPTY_XML_DOCUMENT_ERROR;
-import static org.wssecurity.Constants.ENCRYPT;
-import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
-import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
-import static org.wssecurity.Constants.NATIVE_SIGNATURE;
-import static org.wssecurity.Constants.NATIVE_UT;
-import static org.wssecurity.Constants.NONE;
-import static org.wssecurity.Constants.SIGNATURE;
-import static org.wssecurity.Constants.SIGN_AND_ENCRYPT;
-import static org.wssecurity.Utils.createError;
+import static org.wssec.Constants.DERIVED_KEY_DIGEST;
+import static org.wssec.Constants.DERIVED_KEY_TEXT;
+import static org.wssec.Constants.DIGEST;
+import static org.wssec.Constants.EMPTY_XML_DOCUMENT_ERROR;
+import static org.wssec.Constants.ENCRYPT;
+import static org.wssec.Constants.NATIVE_ENCRYPTION;
+import static org.wssec.Constants.NATIVE_SEC_HEADER;
+import static org.wssec.Constants.NATIVE_SIGNATURE;
+import static org.wssec.Constants.NATIVE_UT;
+import static org.wssec.Constants.NONE;
+import static org.wssec.Constants.SIGNATURE;
+import static org.wssec.Constants.SIGN_AND_ENCRYPT;
+import static org.wssec.Utils.createError;
 
 public class UsernameToken {
 

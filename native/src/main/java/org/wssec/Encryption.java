@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -23,7 +23,7 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 
-import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
+import static org.wssec.Constants.NATIVE_ENCRYPTION;
 
 public class Encryption {
     private String encryptionAlgorithm;

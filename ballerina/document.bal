@@ -23,14 +23,14 @@ public class Document {
     }
 
     public function getDocument() returns string|Error = @java:Method {
-        'class: "org.wssecurity.DocumentBuilder"
+        'class: "org.wssec.DocumentBuilder"
     } external;
 
     public function getEnvelopeBody() returns string|Error = @java:Method {
-        'class: "org.wssecurity.DocumentBuilder"
+        'class: "org.wssec.DocumentBuilder"
     } external;
 }
 
 function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {
-    'class: "org.wssecurity.DocumentBuilder"
+    'class: "org.wssec.DocumentBuilder"
 } external;

@@ -11,15 +11,15 @@ plugins {
     id "com.gradle.enterprise" version "3.2"
 }
 
-rootProject.name = 'wssecurity'
+rootProject.name = 'wssec'
 
 include ':checkstyle'
-include ':wssecurity-native'
-include ':wssecurity-ballerina'
+include ':wssec-native'
+include ':wssec-ballerina'
 
 project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
-project(':wssecurity-native').projectDir = file('native')
-project(':wssecurity-ballerina').projectDir = file('ballerina')
+project(':wssec-native').projectDir = file('native')
+project(':wssec-ballerina').projectDir = file('ballerina')
 
 gradleEnterprise {
     buildScan {

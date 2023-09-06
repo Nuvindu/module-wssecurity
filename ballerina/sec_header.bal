@@ -24,10 +24,10 @@ public class WSSecurityHeader {
     }
 
     public function insertSecHeader() returns Error? = @java:Method {
-        'class: "org.wssecurity.WSSecurityHeader"
+        'class: "org.wssec.WSSecurityHeader"
     } external;
 }
 
 function newSecHeader(Document document) returns handle = @java:Constructor {
-    'class: "org.wssecurity.WSSecurityHeader"
+    'class: "org.wssec.WSSecurityHeader"
 } external;

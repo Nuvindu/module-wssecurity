@@ -26,10 +26,10 @@ public class TimestampToken {
     }
 
     public function addTimestamp() returns string|Error = @java:Method {
-        'class: "org.wssecurity.Timestamp"
+        'class: "org.wssec.Timestamp"
     } external;
 }
 
 function newTimestamp(WSSecurityHeader wsSecHeader, int timeToLive) returns handle = @java:Constructor {
-    'class: "org.wssecurity.Timestamp"
+    'class: "org.wssec.Timestamp"
 } external;

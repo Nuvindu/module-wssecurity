@@ -91,18 +91,18 @@ public class Encryption {
     }
 
     public function setEncryptionAlgorithm(string encryptionAlgorithm) = @java:Method {
-        'class: "org.wssecurity.Encryption"
+        'class: "org.wssec.Encryption"
     } external;
 
     public function setEncryptedData(byte[] encryptedData) = @java:Method {
-        'class: "org.wssecurity.Encryption"
+        'class: "org.wssec.Encryption"
     } external;
 
     public function getEncryptedData() returns byte[] = @java:Method {
-        'class: "org.wssecurity.Encryption"
+        'class: "org.wssec.Encryption"
     } external;
 }
 
 function newEncryption(EncryptionAlgorithm encryptionAlgorithm) returns handle = @java:Constructor {
-    'class: "org.wssecurity.Encryption"
+    'class: "org.wssec.Encryption"
 } external;

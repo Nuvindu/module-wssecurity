@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -37,9 +37,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import static org.wssecurity.Constants.NATIVE_DOCUMENT;
-import static org.wssecurity.Constants.SOAP_BODY_TAG;
-import static org.wssecurity.Utils.createError;
+import static org.wssec.Constants.NATIVE_DOCUMENT;
+import static org.wssec.Constants.SOAP_BODY_TAG;
+import static org.wssec.Utils.createError;
 
 public class DocumentBuilder {
     private final Document document;

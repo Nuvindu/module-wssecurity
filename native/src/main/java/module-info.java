@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-module wssecurity {
+module wssec {
     requires io.ballerina.runtime;
     requires org.apache.wss4j.dom;
     requires org.apache.wss4j.common;

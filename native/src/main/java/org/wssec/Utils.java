@@ -14,13 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 
-import static org.wssecurity.ModuleUtils.getModule;
+import static org.wssec.ModuleUtils.getModule;
 
 public class Utils {
 

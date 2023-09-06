@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import org.apache.wss4j.common.WSEncryptionPart;
 import org.apache.wss4j.common.ext.WSSecurityException;
@@ -38,10 +38,10 @@ import javax.xml.crypto.dsig.Reference;
 
 import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
 import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
-import static org.wssecurity.Constants.CIPHER_VALUE_TAG;
-import static org.wssecurity.Constants.ITERATION;
-import static org.wssecurity.Constants.NAMESPACE_URI_ENC;
-import static org.wssecurity.Constants.SIGNATURE_VALUE_TAG;
+import static org.wssec.Constants.CIPHER_VALUE_TAG;
+import static org.wssec.Constants.ITERATION;
+import static org.wssec.Constants.NAMESPACE_URI_ENC;
+import static org.wssec.Constants.SIGNATURE_VALUE_TAG;
 
 public class WSSecurityUtils {
 

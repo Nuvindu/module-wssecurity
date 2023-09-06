@@ -79,18 +79,18 @@ public class Signature {
     }
 
     public function setSignatureAlgorithm(string signatureAlgorithm) = @java:Method {
-        'class: "org.wssecurity.Signature"
+        'class: "org.wssec.Signature"
     } external;
 
     public function setSignatureValue(byte[] signatureValue) = @java:Method {
-        'class: "org.wssecurity.Signature"
+        'class: "org.wssec.Signature"
     } external;
 
     public function getSignatureValue() returns byte[] = @java:Method {
-        'class: "org.wssecurity.Signature"
+        'class: "org.wssec.Signature"
     } external;
 }
 
 function newSignature(SignatureAlgorithm signatureAlgorithm) returns handle = @java:Constructor {
-    'class: "org.wssecurity.Signature"
+    'class: "org.wssec.Signature"
 } external;

@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssecurity;
+package org.wssec;
 
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
@@ -30,10 +30,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import static org.wssecurity.Constants.NATIVE_UT;
-import static org.wssecurity.Constants.NATIVE_X509_TOKEN;
-import static org.wssecurity.Constants.X509;
-import static org.wssecurity.Utils.createError;
+import static org.wssec.Constants.NATIVE_UT;
+import static org.wssec.Constants.NATIVE_X509_TOKEN;
+import static org.wssec.Constants.X509;
+import static org.wssec.Utils.createError;
 
 public class X509SecToken  {
     private final Crypto crypto;

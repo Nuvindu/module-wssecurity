@@ -61,23 +61,23 @@ public class UsernameToken {
     public function populateHeaderData(string username, string password, string pwType,
                                        Encryption encData, Signature signValue, AuthType authType = NONE)
                                        returns string|Error = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
+        'class: "org.wssec.UsernameToken"
     } external;
 
     public function setPassword(string password) = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
+        'class: "org.wssec.UsernameToken"
     } external;
 
     public function getEncryptedData() returns byte[] = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
+        'class: "org.wssec.UsernameToken"
     } external;
 
     public function getSignatureData() returns byte[] = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
+        'class: "org.wssec.UsernameToken"
     } external;
 }
 
 function newToken(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) 
     returns handle = @java:Constructor {
-    'class: "org.wssecurity.UsernameToken"
+    'class: "org.wssec.UsernameToken"
 } external;

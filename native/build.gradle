@@ -64,7 +64,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId project.group
-            artifactId "wssecurity-native"
+            artifactId "wssec-native"
             version = project.version
             artifact jar
         }
