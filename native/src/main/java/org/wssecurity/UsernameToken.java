@@ -147,24 +147,19 @@ public class UsernameToken {
         }
     }
 
-    public static Document addSignatureWithToken(UsernameToken usernameTokenObj, String username, String password,
-                                                 String passwordType, byte[] salt, byte[] privateKey) throws Exception {
+    public static Document createSignatureTags(UsernameToken usernameTokenObj, String username, String password,
+                                               String passwordType, byte[] salt,
+                                               boolean useDerivedKey) throws Exception {
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         RequestData reqData = new RequestData();
-        reqData.setUsername(username);
-        reqData.setPwType(WSConstants.PASSWORD_TEXT); // remove?
         reqData.setSecHeader(usernameToken.getSecurityHeader());
         reqData.setWssConfig(WSSConfig.getNewInstance());
-        setConfigs(usernameToken, passwordType, username, password);
-        usernameToken.addDerivedKey(Constants.ITERATION);
+        reqData.setWsDocInfo(new WSDocInfo(usernameTokenObj.getDocument()));
+        setUTChildElements(usernameToken, passwordType, username, password);
         usernameToken.prepare(salt);
-        if (privateKey != null) {
-            usernameTokenObj.getSignature().buildSignature(reqData,
-                    usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj, privateKey));
-        } else {
-            usernameTokenObj.getSignature().buildSignature(reqData,
-                    usernameTokenObj.getSignature().prepareSignature(reqData, usernameTokenObj));
-        }
+        WSSecurityUtils.buildSignature(reqData,
+                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
+                                                     usernameTokenObj.getSignAlgo(), useDerivedKey));
         return usernameToken.build(salt);
     }
 
