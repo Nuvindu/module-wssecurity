@@ -168,24 +168,16 @@ public class UsernameToken {
         return usernameToken.build(salt);
     }
 
-    public static Document buildDocument(WSSecUsernameToken usernameToken, String passwordType) {
-        if (Objects.equals(passwordType, Constants.SIGNATURE)) {
-            byte[] salt = UsernameTokenUtil.generateSalt(true);
-            usernameToken.prepare(salt);
-            return usernameToken.build(salt);
-        }
-        return usernameToken.build();
-    }
-
-    public static void setConfigs(WSSecUsernameToken usernameToken, String passwordType,
+    public static void setUTChildElements(WSSecUsernameToken usernameToken, String passwordType,
                                   String username, String password) {
-        if (Objects.equals(passwordType, Constants.DIGEST)) {
-            usernameToken.setPasswordType(WSConstants.PASSWORD_DIGEST);
+        if (Objects.equals(passwordType, DIGEST)
+                || Objects.equals(passwordType, DERIVED_KEY_DIGEST)) {
+            usernameToken.setPasswordType(PASSWORD_DIGEST);
             usernameToken.setUserInfo(username, password);
             usernameToken.addCreated();
             usernameToken.addNonce();
         } else {
-            usernameToken.setPasswordType(WSConstants.PASSWORD_TEXT);
+            usernameToken.setPasswordType(PASSWORD_TEXT);
             usernameToken.setUserInfo(username, password);
         }
     }
