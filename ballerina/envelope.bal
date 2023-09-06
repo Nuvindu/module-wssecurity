@@ -121,9 +121,9 @@ public class Envelope {
         return error("WS Security policy headers are not set.");
     }
 
-    public function applyTimestampToken(int timeToLive) returns string|Error {
+    public function applyTimestampToken(*TSRecord tsRecord) returns string|Error {
         check self.addSecurityHeader();
-        check self.addTimestampToken(timeToLive);
+        check self.addTimestampToken(tsRecord.timeToLive);
         return check self.generateEnvelope();
     }
 
@@ -166,9 +166,9 @@ public class Envelope {
     }
 
     public function applyAsymmetricBinding(string alias, string password, crypto:PrivateKey privateKey,
-                                          crypto:PublicKey publicKey, EncryptionAlgorithm encAlgo,
-                                          SignatureAlgorithm signAlgo, X509Token? x509Token = ())
-                                          returns string|Error {
+                                           crypto:PublicKey publicKey, EncryptionAlgorithm encAlgo,
+                                           SignatureAlgorithm signAlgo, X509Token? x509Token = ())
+                                           returns string|Error {
         byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(), encAlgo, publicKey);
         self.addEncryption(encAlgo, encryptData);
         byte[] signedData = check self.sign.signData(check self.getEnvelopeBody(), signAlgo, privateKey);

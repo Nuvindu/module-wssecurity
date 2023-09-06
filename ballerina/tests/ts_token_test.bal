@@ -22,7 +22,7 @@ import ballerina/test;
 function testTimestampToken() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     Envelope env = check new (xmlPayload);
-    string generateEnvelope = check env.applyTimestampToken(600);
+    string generateEnvelope = check env.applyTimestampToken(timeToLive = 600);
 
     string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
     string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
@@ -38,7 +38,10 @@ function testTimestampToken() returns error? {
 function testTimestampTokenIncorrectTimeError() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     Envelope env = check new (xmlPayload);
-    string|Error generateEnvelope = env.applyTimestampToken(-1);
+    TSRecord tsRecord = {
+        timeToLive: -1
+    };
+    string|Error generateEnvelope = env.applyTimestampToken(tsRecord);
 
     test:assertTrue(generateEnvelope is Error);
     if generateEnvelope is Error {
