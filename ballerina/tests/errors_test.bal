@@ -21,10 +21,9 @@ import ballerina/test;
 }
 function testNoPolicyError() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-
-    Envelope env = check new(xmlPayload);
+    Envelope env = check new (xmlPayload);
     string|Error policyError = env.generateEnvelope();
-    error expectedError = error( "WS Security policy headers are not set.");
+    error expectedError = error("WS Security policy headers are not set.");
     test:assertTrue(policyError is Error);
     if policyError is Error {
         test:assertEquals(policyError.message(), expectedError.message());
@@ -39,8 +38,8 @@ function testUTDoesNotExistError() returns error? {
     string x509certPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
     string expectedErrorMessage = "Username Token does not exist.";
     error expectedErrorCause = error("Currently, X509 token is depended on the username token");
-    Envelope env = check new(xmlPayload); 
-    X509Token|Error x509Token = new(x509certPath);
+    Envelope env = check new (xmlPayload);
+    X509Token|Error x509Token = new (x509certPath);
     test:assertTrue(x509Token !is Error);
     Error? x509TokenResult = env.addX509Token(x509certPath);
     test:assertTrue(x509TokenResult !is ());

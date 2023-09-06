@@ -14,8 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents any error related to the wssecurity module.
+# Represents any error related to the wssec module.
 public type Error distinct error;
-
-public const string USERNAME_NOT_SET_ERROR = "Username Token is not set. Currently, " +
-                                             "Username Token is requred to perform the rest of the operation.";

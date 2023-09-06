@@ -13,11 +13,11 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/jballerina.java;
 
 public class UsernameToken {
     *Token;
-
     private handle nativeUT;
     private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
     private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
@@ -59,7 +59,7 @@ public class UsernameToken {
         return self.encryptionAlgorithm;
     }
     public function populateHeaderData(string username, string password, string pwType,
-                                       byte[] encData, byte[] signValue, AuthType authType = NONE)
+                                       Encryption encData, Signature signValue, AuthType authType = NONE)
                                        returns string|Error = @java:Method {
         'class: "org.wssecurity.UsernameToken"
     } external;

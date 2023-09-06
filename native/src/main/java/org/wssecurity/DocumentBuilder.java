@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
@@ -41,7 +42,6 @@ import static org.wssecurity.Constants.SOAP_BODY_TAG;
 import static org.wssecurity.Utils.createError;
 
 public class DocumentBuilder {
-
     private final Document document;
 
     public DocumentBuilder(BString xmlPayload) {

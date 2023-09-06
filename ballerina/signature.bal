@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/random;
 import ballerina/crypto;
 import ballerina/jballerina.java;
@@ -23,22 +24,22 @@ public class Signature {
     private byte[16] key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    public function init() returns Error? {
-        foreach int i in 0...15 {
+    public function init(SignatureAlgorithm signatureAlgorithm = RSA_SHA1) returns Error? {
+        foreach int i in 0 ... 15 {
             self.key[i] = <byte>(check random:createIntInRange(0, 255));
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
-        foreach int i in 0...15 {
+        foreach int i in 0 ... 15 {
             self.initialVector[i] = <byte>(check random:createIntInRange(0, 255));
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
-        self.nativeSignature = newSignature();
+        self.nativeSignature = newSignature(signatureAlgorithm);
     }
 
-    public function signData(string dataString, SignatureAlgorithm signatureAlgorithm, 
-                             crypto:PrivateKey privateKey) returns byte[]|Error {
+    public function signData(string dataString, SignatureAlgorithm signatureAlgorithm,
+            crypto:PrivateKey privateKey) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
             match signatureAlgorithm {
@@ -53,12 +54,12 @@ public class Signature {
                 }
             }
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
     }
 
-    public function verifySignature(byte[] data, byte[] signature, crypto:PublicKey publicKey, 
-                                    SignatureAlgorithm signatureAlgorithm = RSA_SHA256) returns boolean|Error {
+    public function verifySignature(byte[] data, byte[] signature, crypto:PublicKey publicKey,
+            SignatureAlgorithm signatureAlgorithm = RSA_SHA256) returns boolean|Error {
         do {
             match signatureAlgorithm {
                 RSA_SHA256 => {
@@ -71,9 +72,9 @@ public class Signature {
                     return error("Invalid signature!");
                 }
             }
-	        
+
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
     }
 
@@ -90,6 +91,6 @@ public class Signature {
     } external;
 }
 
-function newSignature() returns handle = @java:Constructor {
+function newSignature(SignatureAlgorithm signatureAlgorithm) returns handle = @java:Constructor {
     'class: "org.wssecurity.Signature"
 } external;

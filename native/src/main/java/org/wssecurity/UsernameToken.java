@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
@@ -45,7 +46,9 @@ import static org.wssecurity.Constants.DERIVED_KEY_TEXT;
 import static org.wssecurity.Constants.DIGEST;
 import static org.wssecurity.Constants.EMPTY_XML_DOCUMENT_ERROR;
 import static org.wssecurity.Constants.ENCRYPT;
+import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
 import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
+import static org.wssecurity.Constants.NATIVE_SIGNATURE;
 import static org.wssecurity.Constants.NATIVE_UT;
 import static org.wssecurity.Constants.NONE;
 import static org.wssecurity.Constants.SIGNATURE;
@@ -156,11 +159,18 @@ public class UsernameToken {
     }
 
     public static Object populateHeaderData(BObject userToken, BString username, BString password,
-                                          BString pwType, BArray encryptedData, BArray signatureValue,
-                                          BString authType) {
+                                            BString pwType, BObject encryptedData, BObject signatureValue,
+                                            BString authType) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+
+        handle = (BHandle) encryptedData.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        Encryption encryption = (Encryption) handle.getValue();
+
+        handle = (BHandle) signatureValue.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        Signature signature = (Signature) handle.getValue();
+
         byte[] salt = UsernameTokenUtil.generateSalt(true);
         Document xmlDocument;
         try {
@@ -179,21 +189,21 @@ public class UsernameToken {
                     xmlDocument = createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signatureValue.getByteArray());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
                 }
                 case ENCRYPT -> {
                     setUTChildElements(usernameToken, DIGEST, username.getValue(), password.getValue());
                     usernameToken.build();
                     xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryptedData.getByteArray());
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
                 }
                 case SIGN_AND_ENCRYPT -> {
                     createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
                     xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryptedData.getByteArray());
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signatureValue.getByteArray());
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
                 }
                 default -> {
                     return createError("Given ws security policy is currently not supported");

@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -22,7 +23,6 @@ import io.ballerina.runtime.api.values.BString;
 import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.crypto.CryptoFactory;
 import org.apache.wss4j.common.ext.WSSecurityException;
-import org.apache.wss4j.dom.WSConstants;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,13 +30,16 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+import static org.wssecurity.Constants.NATIVE_UT;
+import static org.wssecurity.Constants.NATIVE_X509_TOKEN;
 import static org.wssecurity.Utils.createError;
 
 public class X509SecToken  {
     private final Crypto crypto;
     private final X509Certificate x509Certificate;
+
     public X509SecToken(BString filePath) {
-        FileInputStream fis = null;
+        FileInputStream fis;
         try {
             fis = new FileInputStream(filePath.getValue());
             CertificateFactory certificateFactory = CertificateFactory.getInstance(Constants.X509);
@@ -53,9 +56,9 @@ public class X509SecToken  {
     }
 
     public static void addX509Token(BObject x509Token, BObject userToken) {
-        BHandle handle = (BHandle) x509Token.get(StringUtils.fromString(Constants.NATIVE_X509_TOKEN));
+        BHandle handle = (BHandle) x509Token.get(StringUtils.fromString(NATIVE_X509_TOKEN));
         X509SecToken x509SecToken = (X509SecToken) handle.getValue();
-        handle = (BHandle) userToken.get(StringUtils.fromString(Constants.NATIVE_UT));
+        handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameToken = (UsernameToken) handle.getValue();
         usernameToken.setX509Token(x509SecToken);
     }
@@ -64,7 +67,4 @@ public class X509SecToken  {
         return this.crypto;
     }
 
-    public String getCustomTokenValueType() {
-        return WSConstants.X509TOKEN_NS + "#X509Token";
-    }
 }

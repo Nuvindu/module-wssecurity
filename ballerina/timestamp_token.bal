@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/jballerina.java;
+
 public class TimestampToken {
     *Token;
 

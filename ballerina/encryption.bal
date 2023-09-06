@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/random;
 import ballerina/crypto;
 import ballerina/jballerina.java;
@@ -23,21 +24,21 @@ public class Encryption {
     private byte[16] key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    public function init() returns Error? {
-        
-        foreach int i in 0...15 {
+    public function init(EncryptionAlgorithm encryptionAlgorithm = AES_128) returns Error? {
+        foreach int i in 0 ... 15 {
             self.key[i] = <byte>(check random:createIntInRange(0, 255));
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
-        foreach int i in 0...15 {
+        foreach int i in 0 ... 15 {
             self.initialVector[i] = <byte>(check random:createIntInRange(0, 255));
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
-        self.nativeEncryption = newEncryption();
+        self.nativeEncryption = newEncryption(encryptionAlgorithm);
     }
-    public function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm, 
+
+    public function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm,
                                 crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
@@ -58,13 +59,13 @@ public class Encryption {
                     return error("Encryption Algorithm is not supported");
                 }
             }
-	        
+
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
     }
 
-    public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm, 
+    public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm,
                                 crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
         do {
             match encryptionAlgorithm {
@@ -85,7 +86,7 @@ public class Encryption {
                 }
             }
         } on fail var e {
-        	return error(e.message());
+            return error(e.message());
         }
     }
 
@@ -102,6 +103,6 @@ public class Encryption {
     } external;
 }
 
-function newEncryption() returns handle = @java:Constructor {
+function newEncryption(EncryptionAlgorithm encryptionAlgorithm) returns handle = @java:Constructor {
     'class: "org.wssecurity.Encryption"
 } external;

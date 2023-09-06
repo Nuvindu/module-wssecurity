@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
@@ -21,12 +22,15 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import org.apache.wss4j.dom.message.WSSecTimestamp;
 
+import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
+import static org.wssecurity.Constants.NATIVE_TS_TOKEN;
+
 public class Timestamp {
 
     private final WSSecTimestamp timestamp;
 
     public Timestamp(BObject secHeader, int timeToLive) {
-        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(Constants.NATIVE_SEC_HEADER));
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
         WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
         timestamp = new WSSecTimestamp(wsSecurityHeader.getWsSecHeader());
         timestamp.setTimeToLive(timeToLive);
@@ -37,7 +41,7 @@ public class Timestamp {
     }
 
     public static Object addTimestamp(BObject timestamp) {
-        BHandle handle = (BHandle) timestamp.get(StringUtils.fromString(Constants.NATIVE_TS_TOKEN));
+        BHandle handle = (BHandle) timestamp.get(StringUtils.fromString(NATIVE_TS_TOKEN));
         Timestamp timestampObj = (Timestamp) handle.getValue();
         WSSecTimestamp timestampBuilder = timestampObj.getTimestamp();
         try {
