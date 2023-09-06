@@ -150,7 +150,7 @@ public class UsernameToken {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         return ValueCreator.createArrayValue(WSSecurityUtils.getEncryptedData(usernameTokenObj.getDocument()));
-            }
+    }
 
     public static BArray getSignatureData(BObject userToken) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
@@ -232,7 +232,7 @@ public class UsernameToken {
     }
 
     public static void setUTChildElements(WSSecUsernameToken usernameToken, String passwordType,
-                                  String username, String password) {
+                                          String username, String password) {
         if (Objects.equals(passwordType, DIGEST)
                 || Objects.equals(passwordType, DERIVED_KEY_DIGEST)) {
             usernameToken.setPasswordType(PASSWORD_DIGEST);
