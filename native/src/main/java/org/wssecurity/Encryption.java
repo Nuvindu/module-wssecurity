@@ -1,51 +1,70 @@
+// Copyright (c) 2023, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+//
+// WSO2 Inc. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package org.wssecurity;
 
-import org.apache.wss4j.common.ext.WSSecurityException;
-import org.apache.wss4j.common.util.KeyUtils;
-import org.apache.wss4j.dom.WSConstants;
-import org.apache.wss4j.dom.message.WSSecDKEncrypt;
-import org.apache.wss4j.dom.message.WSSecEncrypt;
-import org.apache.wss4j.dom.message.WSSecUsernameToken;
-import org.w3c.dom.Document;
+import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BHandle;
+import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
 
 import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
 
 public class Encryption {
-        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
-        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
-        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+    private String encryptionAlgorithm;
+    private byte[] encryptedData;
 
-    private final String encryptionAlgorithm;
-    public Encryption(String encryptionAlgorithm) {
+    public Encryption(BString encryptionAlgorithm) {
+        this.encryptionAlgorithm = encryptionAlgorithm.getValue();
+        this.encryptedData = new byte[0];
+    }
+
+    public static void setEncryptionAlgorithm(BObject encrypt, BString encryptionAlgorithm) {
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        Encryption encryption = (Encryption) handle.getValue();
+        encryption.setEncryptionAlgorithm(encryptionAlgorithm.getValue());
+    }
+
+    public static void setEncryptedData(BObject encrypt, BArray encryptedData) {
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        Encryption encryption = (Encryption) handle.getValue();
+        encryption.setEncryptedData(encryptedData.getByteArray());
+    }
+
+    public static BArray getEncryptedData(BObject encrypt) {
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        Encryption encryption = (Encryption) handle.getValue();
+        return ValueCreator.createArrayValue(encryption.getEncryptedData());
+    }
+
+    protected String getEncryptionAlgorithm() {
+        return encryptionAlgorithm;
+    }
+
+    protected byte[] getEncryptedData() {
+        return encryptedData;
+    }
+
+    protected void setEncryptionAlgorithm(String encryptionAlgorithm) {
         this.encryptionAlgorithm = encryptionAlgorithm;
     }
 
-    public Document encryptEnv(WSSecUsernameToken usernameToken, byte[] rawKey) throws WSSecurityException {
-        WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
-        encryptionBuilder.setSymmetricEncAlgorithm(encryptionAlgorithm);
-        encryptionBuilder.setTokenIdentifier(usernameToken.getId());
-        encryptionBuilder.setCustomValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
-        usernameToken.addDerivedKey(Constants.ITERATION);
-        Document encryptedDoc = encryptionBuilder.build(rawKey);
-        usernameToken.prependToHeader();
-        return encryptedDoc;
-    }
-
-    public Document encryptWithSymmetricKey(UsernameToken usernameToken,
-                                            byte[] rawKey) throws WSSecurityException, NoSuchAlgorithmException {
-        WSSecEncrypt encryptionBuilder = new WSSecEncrypt(usernameToken.getUsernameToken().getSecurityHeader());
-        encryptionBuilder.setSymmetricEncAlgorithm(encryptionAlgorithm);
-        encryptionBuilder.setCustomEKTokenId(usernameToken.getUsernameToken().getId());
-        encryptionBuilder.setCustomEKTokenValueType(WSConstants.WSS_USERNAME_TOKEN_VALUE_TYPE);
-        usernameToken.getUsernameToken().addDerivedKey(Constants.ITERATION);
-        SecretKey secretKey1 = KeyUtils.prepareSecretKey(encryptionAlgorithm, rawKey);
-        Document encryptedDoc = encryptionBuilder.build(usernameToken.getCryptoProperties(), secretKey1);
-        usernameToken.getUsernameToken().prependToHeader();
-//        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-//        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-//        keyPair.getPublic();
-//        X509Certificate x509Certificate = ;
-//        x509Certificate.getPublicKey()
-        return encryptedDoc;
+    protected void setEncryptedData(byte[] encryptedData) {
+        this.encryptedData = encryptedData;
     }
 }
