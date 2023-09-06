@@ -16,7 +16,8 @@
 import ballerina/jballerina.java;
 
 public class UsernameToken {
-    private handle nativeToken;
+    *Token;
+        self.'type = USERNAME_TOKEN;
 
     public function init(WSSecurityHeader wsSecHeader) {
         self.nativeToken = newToken(wsSecHeader);

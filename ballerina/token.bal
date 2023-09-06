@@ -13,20 +13,10 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/jballerina.java;
 
-public class X509Token {
-    *Token;
-    private handle nativeX509Token;
-
-        self.'type = X509_TOKEN;
-    }
-
-    public function addX509Token(UsernameToken usernameToken) = @java:Method {
-        'class: "org.wssecurity.X509SecToken"
-    } external;
-}
-
-function newX509Token(string filePath) returns handle = @java:Constructor {
-    'class: "org.wssecurity.X509SecToken"
-} external;
+# Represents the interface for web service security tokens.
+#
+# + 'type - the type of the security token
+public type Token distinct object {
+    public string 'type;
+};
