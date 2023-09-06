@@ -21,6 +21,9 @@ import io.ballerina.runtime.api.values.BObject;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.message.WSSecHeader;
 import org.w3c.dom.Document;
+import static org.wssecurity.Constants.NATIVE_DOCUMENT;
+import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
+import static org.wssecurity.Utils.createError;
 
 public class WSSecurityHeader {
     private final WSSecHeader wsSecHeader;
@@ -28,7 +31,7 @@ public class WSSecurityHeader {
     private final Document document;
 
     public WSSecurityHeader(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
         DocBuilder docBuilder = (DocBuilder) handle.getValue();
         this.wsSecHeader = new WSSecHeader(docBuilder.getNativeDocument());
         this.document = docBuilder.getNativeDocument();
@@ -43,7 +46,7 @@ public class WSSecurityHeader {
     }
 
     public static void insertSecHeader(BObject secHeader) throws WSSecurityException {
-        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString("nativeSecHeader"));
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
         WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
         wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
     }

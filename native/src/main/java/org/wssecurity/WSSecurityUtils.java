@@ -1,0 +1,14 @@
+import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
+import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
+import static org.wssecurity.Constants.CIPHER_VALUE_TAG;
+import static org.wssecurity.Constants.ITERATION;
+import static org.wssecurity.Constants.NAMESPACE_URI_ENC;
+import static org.wssecurity.Constants.SIGNATURE_VALUE_TAG;
+        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(), salt, ITERATION);
+            usernameToken.getUsernameToken().addDerivedKey(ITERATION);
+            sign.setKeyIdentifierType(X509_KEY_IDENTIFIER);
+            sign.setKeyIdentifierType(CUSTOM_KEY_IDENTIFIER);
+        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
+        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);

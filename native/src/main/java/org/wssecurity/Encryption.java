@@ -8,11 +8,12 @@ import org.apache.wss4j.dom.message.WSSecEncrypt;
 import org.apache.wss4j.dom.message.WSSecUsernameToken;
 import org.w3c.dom.Document;
 
-import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.SecretKey;
+import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
 
 public class Encryption {
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        BHandle handle = (BHandle) encrypt.get(StringUtils.fromString(NATIVE_ENCRYPTION));
 
     private final String encryptionAlgorithm;
     public Encryption(String encryptionAlgorithm) {

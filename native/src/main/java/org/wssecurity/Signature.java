@@ -25,12 +25,12 @@ import org.apache.wss4j.dom.message.WSSecSignature;
 import org.apache.wss4j.dom.util.WSSecurityUtil;
 import org.w3c.dom.Document;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.crypto.dsig.Reference;
+import static org.wssecurity.Constants.NATIVE_SIGNATURE;
 
 public class Signature {
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
 
     public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
         List<WSEncryptionPart> parts = null;

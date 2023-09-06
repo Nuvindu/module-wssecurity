@@ -36,6 +36,20 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_DIGEST;
+import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_TEXT;
+import static org.wssecurity.Constants.DERIVED_KEY_DIGEST;
+import static org.wssecurity.Constants.DERIVED_KEY_TEXT;
+import static org.wssecurity.Constants.DIGEST;
+import static org.wssecurity.Constants.EMPTY_XML_DOCUMENT_ERROR;
+import static org.wssecurity.Constants.ENCRYPT;
+import static org.wssecurity.Constants.NATIVE_ENCRYPTION;
+import static org.wssecurity.Constants.NATIVE_SEC_HEADER;
+import static org.wssecurity.Constants.NATIVE_SIGNATURE;
+import static org.wssecurity.Constants.NATIVE_UT;
+import static org.wssecurity.Constants.NONE;
+import static org.wssecurity.Constants.SIGNATURE;
+import static org.wssecurity.Constants.SIGN_AND_ENCRYPT;
 
 public class UsernameToken {
 
@@ -59,6 +73,9 @@ public class UsernameToken {
         this.signature = new Signature();
         this.document = securityHeader.getDocument();
     }
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
 
     protected WSSecUsernameToken getUsernameToken() {
         return usernameToken;
@@ -84,9 +101,7 @@ public class UsernameToken {
         return (x509SecToken == null) ? null : x509SecToken.getCryptoProperties();
     }
 
-    public static Object buildToken(BObject userToken, BString username, BString password,
-                                    BString pwType) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
         byte[] salt = UsernameTokenUtil.generateSalt(true);
@@ -109,10 +124,7 @@ public class UsernameToken {
                 setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
                 doc = buildDocument(usernameToken, pwType.getValue());
             }
-            return StringUtils.fromString(convertDocumentToString(doc));
-        } catch (Exception e) {
-            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
-        }
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
     }
 
     public static Object buildTokenWithKey(BObject userToken, BString username, BString password,
@@ -120,14 +132,13 @@ public class UsernameToken {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+        handle = (BHandle) encryptedData.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        handle = (BHandle) signatureValue.get(StringUtils.fromString(NATIVE_SIGNATURE));
         byte[] salt = UsernameTokenUtil.generateSalt(true);
         try {
-            if (pwType.getValue().equals(Constants.ASYMMETRIC_SIGN_AND_ENCRYPT)) {
-                addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                        "TEXT", salt, privateKey.getValue().getBytes(StandardCharsets.UTF_8));
-                Encryption encryption = (new Encryption(WSConstants.AES_128));
-                Document document = encryption.encryptEnv(usernameToken, salt);
-                return StringUtils.fromString(convertDocumentToString(document));
+                        case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST ->  {
+                            pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
+                                    || pwType.getValue().equals(DERIVED_KEY_DIGEST));
             }
             setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
             return StringUtils.fromString(convertDocumentToString(buildDocument(usernameToken, pwType.getValue())));
@@ -179,7 +190,7 @@ public class UsernameToken {
         }
     }
 
-    public static String convertDocumentToString(Document doc) throws Exception {
+            return ErrorCreator.createError(StringUtils.fromString(EMPTY_XML_DOCUMENT_ERROR));
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         StringWriter writer = new StringWriter();
