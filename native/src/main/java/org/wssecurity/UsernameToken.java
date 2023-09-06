@@ -127,23 +127,60 @@ public class UsernameToken {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
     }
 
-    public static Object buildTokenWithKey(BObject userToken, BString username, BString password,
-                                    BString pwType, BString privateKey) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString("nativeToken"));
+    public static Object populateHeaderData(BObject userToken, BString username, BString password,
+                                            BString pwType, BObject encryptedData, BObject signatureValue,
+                                            BString authType) {
+        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
         WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
+
         handle = (BHandle) encryptedData.get(StringUtils.fromString(NATIVE_ENCRYPTION));
+        Encryption encryption = (Encryption) handle.getValue();
+
         handle = (BHandle) signatureValue.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        Signature signature = (Signature) handle.getValue();
+
         byte[] salt = UsernameTokenUtil.generateSalt(true);
+        Document xmlDocument;
         try {
+            switch (authType.getValue()) {
+                case NONE -> {
+                    setUTChildElements(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
+                    switch (pwType.getValue()) {
                         case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST ->  {
+                            usernameToken.addDerivedKey(Constants.ITERATION);
+                            xmlDocument = usernameToken.build(UsernameTokenUtil.generateSalt(true));
+                        }
+                        default -> xmlDocument = usernameToken.build();
+                    }
+                }
+                case SIGNATURE -> {
+                    xmlDocument = createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                }
+                case ENCRYPT -> {
+                    setUTChildElements(usernameToken, DIGEST, username.getValue(), password.getValue());
+                    usernameToken.build();
+                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                }
+                case SIGN_AND_ENCRYPT -> {
+                    createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
+                            pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
+                                    || pwType.getValue().equals(DERIVED_KEY_DIGEST));
+                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                }
+                default -> {
+                    return createError("Given ws security policy is currently not supported");
+                }
             }
-            setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
-            return StringUtils.fromString(convertDocumentToString(buildDocument(usernameToken, pwType.getValue())));
+            return convertDocumentToString(xmlDocument);
         } catch (Exception e) {
-            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+            return createError(e.getMessage());
         }
     }
 
