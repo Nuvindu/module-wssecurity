@@ -26,18 +26,10 @@ description = 'Ballerina - Web Services Securities'
 dependencies {
     checkstyle project(':checkstyle')
     checkstyle "com.puppycrawl.tools:checkstyle:${puppycrawlCheckstyleVersion}"
-//    implementation 'org.apache.santuario:xmlsec:2.1.7'
-//    implementation files('libs/w3c-dom.jar')
     implementation group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
-
-//    implementation files('libs/wss4j-ws-security-dom-3.0.1.jar')
-//    implementation files('libs/wss4j-ws-security-common-3.0.1.jar')
     implementation 'org.apache.wss4j:wss4j-ws-security-dom:3.0.1'
-//    implementation 'org.apache.santuario:xmlsec:3.0.2'
+    implementation 'org.apache.santuario:xmlsec:3.0.2'
     implementation 'org.apache.wss4j:wss4j-ws-security-common:3.0.1'
-
-
-
 
 }
 
