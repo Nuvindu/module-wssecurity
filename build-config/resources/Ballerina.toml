@@ -6,7 +6,7 @@ authors = ["Ballerina"]
 keywords = ["wssecurity"]
 icon = "icon.png"
 license = ["Apache-2.0"]
-distribution = "2201.8.0-20230726-145300-b2bdf796"
+distribution = "2201.8.0-20230830-220400-8a7556d8"
 
 [build-options]
 observabilityIncluded = true
