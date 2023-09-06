@@ -190,11 +190,14 @@ public class UsernameToken {
         }
     }
 
+    public static Object convertDocumentToString(Document document) throws Exception {
+        if (document == null) {
             return ErrorCreator.createError(StringUtils.fromString(EMPTY_XML_DOCUMENT_ERROR));
+        }
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-        return writer.toString();
+        transformer.transform(new DOMSource(document), new StreamResult(writer));
+        return StringUtils.fromString(writer.toString());
     }
 }
