@@ -13,27 +13,39 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package org.wssecurity;
+
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
-import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecTimestamp;
+
+import static org.wssec.Constants.NATIVE_SEC_HEADER;
+import static org.wssec.Constants.NATIVE_TS_TOKEN;
 
 public class Timestamp {
 
-    public Timestamp() {
+    private final WSSecTimestamp timestamp;
+
+    public Timestamp(BObject secHeader, int timeToLive) {
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
+        WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
+        timestamp = new WSSecTimestamp(wsSecurityHeader.getWsSecHeader());
+        timestamp.setTimeToLive(timeToLive);
     }
 
-    public static Object setTimestamp(BObject request) {
-        BHandle handle = (BHandle) request.get(StringUtils.fromString("nativeRequest"));
-        RequestData requestData = ((Request) handle.getValue()).getRequestDataObj();
-        WSSecTimestamp timestampBuilder = new WSSecTimestamp(requestData.getSecHeader());
+    protected WSSecTimestamp getTimestamp() {
+        return timestamp;
+    }
 
+    public static Object addTimestamp(BObject timestamp) {
+        BHandle handle = (BHandle) timestamp.get(StringUtils.fromString(NATIVE_TS_TOKEN));
+        Timestamp timestampObj = (Timestamp) handle.getValue();
+        WSSecTimestamp timestampBuilder = timestampObj.getTimestamp();
         try {
-            return StringUtils.fromString(DocBuilder.convertDocumentToString(timestampBuilder.build()));
+            return StringUtils.fromString(DocumentBuilder.convertDocumentToString(timestampBuilder.build()));
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

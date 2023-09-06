@@ -13,20 +13,84 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+import ballerina/random;
+import ballerina/crypto;
 import ballerina/jballerina.java;
 
-public class WSSecSignature {
-    private handle nativeSignature;
+public class Signature {
 
-    public function init(WSSecurityHeader wsSecHeader) returns error? {
-        self.nativeSignature = newSignature(wsSecHeader);
+    private handle nativeSignature;
+    private byte[16] key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    public function init(SignatureAlgorithm signatureAlgorithm = RSA_SHA1) returns Error? {
+        foreach int i in 0 ... 15 {
+            self.key[i] = <byte>(check random:createIntInRange(0, 255));
+        } on fail var e {
+            return error(e.message());
+        }
+        foreach int i in 0 ... 15 {
+            self.initialVector[i] = <byte>(check random:createIntInRange(0, 255));
+        } on fail var e {
+            return error(e.message());
+        }
+        self.nativeSignature = newSignature(signatureAlgorithm);
     }
 
-    public function insertSecHeader() returns error? = @java:Method {
-        'class: "org.wssecurity.WSSecurityHeader"
+    public function signData(string dataString, SignatureAlgorithm signatureAlgorithm,
+            crypto:PrivateKey privateKey) returns byte[]|Error {
+        byte[] data = dataString.toBytes();
+        do {
+            match signatureAlgorithm {
+                RSA_SHA1 => {
+                    return check crypto:signRsaSha1(data, privateKey);
+                }
+                RSA_SHA256 => {
+                    return check crypto:signRsaSha256(data, privateKey);
+                }
+                _ => {
+                    return error("Invalid signature!");
+                }
+            }
+        } on fail var e {
+            return error(e.message());
+        }
+    }
+
+    public function verifySignature(byte[] data, byte[] signature, crypto:PublicKey publicKey,
+            SignatureAlgorithm signatureAlgorithm = RSA_SHA256) returns boolean|Error {
+        do {
+            match signatureAlgorithm {
+                RSA_SHA256 => {
+                    return check crypto:verifyRsaSha256Signature(data, signature, publicKey);
+                }
+                RSA_SHA1 => {
+                    return check crypto:verifyRsaSha1Signature(data, signature, publicKey);
+                }
+                _ => {
+                    return error("Invalid signature!");
+                }
+            }
+
+        } on fail var e {
+            return error(e.message());
+        }
+    }
+
+    public function setSignatureAlgorithm(string signatureAlgorithm) = @java:Method {
+        'class: "org.wssec.Signature"
+    } external;
+
+    public function setSignatureValue(byte[] signatureValue) = @java:Method {
+        'class: "org.wssec.Signature"
+    } external;
+
+    public function getSignatureValue() returns byte[] = @java:Method {
+        'class: "org.wssec.Signature"
     } external;
 }
 
-function newSignature(WSSecurityHeader wsSecHeader) returns handle = @java:Constructor {
-    'class: "org.wssecurity.WSSecurityHeader"
+function newSignature(SignatureAlgorithm signatureAlgorithm) returns handle = @java:Constructor {
+    'class: "org.wssec.Signature"
 } external;

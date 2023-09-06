@@ -85,6 +85,6 @@ release {
 }
 
 task build {
-    dependsOn('wssecurity-native:build')
-    dependsOn('wssecurity-ballerina:build')
+    dependsOn('wssec-native:build')
+    dependsOn('wssec-ballerina:build')
 }

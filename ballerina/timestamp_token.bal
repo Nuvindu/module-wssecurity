@@ -13,19 +13,23 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/jballerina.java;
-public class TimestampToken {
-    private handle nativeToken;
 
-    public function init() {
-        self.nativeToken = newTimestamp();
+import ballerina/jballerina.java;
+
+public class TimestampToken {
+    *Token;
+    private handle nativeTimestampToken;
+
+    public function init(WSSecurityHeader wsSecHeader, int timeToLive) {
+        self.'type = TIMESTAMP_TOKEN;
+        self.nativeTimestampToken = newTimestamp(wsSecHeader, timeToLive);
     }
 
-    public function setTimestamp(Request request) returns string|error = @java:Method {
-        'class: "org.wssecurity.Timestamp"
+    public function addTimestamp() returns string|Error = @java:Method {
+        'class: "org.wssec.Timestamp"
     } external;
 }
 
-function newTimestamp() returns handle = @java:Constructor {
-    'class: "org.wssecurity.Timestamp"
+function newTimestamp(WSSecurityHeader wsSecHeader, int timeToLive) returns handle = @java:Constructor {
+    'class: "org.wssec.Timestamp"
 } external;

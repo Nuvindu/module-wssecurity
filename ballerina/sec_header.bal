@@ -13,20 +13,21 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/jballerina.java;
 
 public class WSSecurityHeader {
     private handle nativeSecHeader;
 
-    public function init(Document document) returns error? {
+    public function init(Document document) returns Error? {
         self.nativeSecHeader = newSecHeader(document);
     }
 
-    public function insertSecHeader() returns error? = @java:Method {
-        'class: "org.wssecurity.WSSecurityHeader"
+    public function insertSecHeader() returns Error? = @java:Method {
+        'class: "org.wssec.WSSecurityHeader"
     } external;
 }
 
 function newSecHeader(Document document) returns handle = @java:Constructor {
-    'class: "org.wssecurity.WSSecurityHeader"
+    'class: "org.wssec.WSSecurityHeader"
 } external;

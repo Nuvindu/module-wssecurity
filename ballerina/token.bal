@@ -14,5 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents any error related to the wssec module.
-public type Error distinct error;
+# Represents the interface for web service security tokens.
+#
+# + 'type - the type of the security token
+public type Token distinct object {
+    public string 'type;
+};

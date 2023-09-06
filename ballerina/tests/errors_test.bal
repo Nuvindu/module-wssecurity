@@ -17,34 +17,34 @@
 import ballerina/test;
 
 @test:Config {
-    groups: ["timestamp_token"]
+    groups: ["error"]
 }
-function testTimestampToken() returns error? {
+function testNoPolicyError() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
     Envelope env = check new (xmlPayload);
-    string generateEnvelope = check env.applyTimestampToken(timeToLive = 600);
-
-    string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
-    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-    string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
-    test:assertTrue(generateEnvelope.includesMatch(ts_token));
-    test:assertTrue(generateEnvelope.includesMatch(created));
-    test:assertTrue(generateEnvelope.includesMatch(expires));
+    string|Error policyError = env.generateEnvelope();
+    error expectedError = error("WS Security policy headers are not set.");
+    test:assertTrue(policyError is Error);
+    if policyError is Error {
+        test:assertEquals(policyError.message(), expectedError.message());
+    }
 }
 
 @test:Config {
-    groups: ["timestamp_token", "error"]
+    groups: ["error", "username_token", "x509"]
 }
-function testTimestampTokenIncorrectTimeError() returns error? {
+function testUTDoesNotExistError() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+    string x509certPath = "/Users/nuvindu/Ballerina/crypto/src/main/resources/certificate.crt";
+    string expectedErrorMessage = "Username Token does not exist.";
+    error expectedErrorCause = error("Currently, X509 token is depended on the username token");
     Envelope env = check new (xmlPayload);
-    TSRecord tsRecord = {
-        timeToLive: -1
-    };
-    string|Error generateEnvelope = env.applyTimestampToken(tsRecord);
-
-    test:assertTrue(generateEnvelope is Error);
-    if generateEnvelope is Error {
-        test:assertEquals(generateEnvelope.message(), "Invalid value for `timeToLive`");
+    X509Token|Error x509Token = new (x509certPath);
+    test:assertTrue(x509Token !is Error);
+    Error? x509TokenResult = env.addX509Token(x509certPath);
+    test:assertTrue(x509TokenResult !is ());
+    if x509TokenResult is Error {
+        test:assertEquals(x509TokenResult.message(), expectedErrorMessage);
+        test:assertEquals((<error>x509TokenResult.cause()).message(), expectedErrorCause.message());
     }
 }

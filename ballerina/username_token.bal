@@ -13,20 +13,71 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/jballerina.java;
 
 public class UsernameToken {
-    private handle nativeToken;
+    *Token;
+    private handle nativeUT;
+    private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
+    private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
+    private string username;
+    private string password;
+    private string passwordType;
 
-    public function init(WSSecurityHeader wsSecHeader) {
-        self.nativeToken = newToken(wsSecHeader);
+    public function init(WSSecurityHeader wsSecHeader, string username, string password, string passwordType) {
+        self.'type = USERNAME_TOKEN;
+        self.username = username;
+        self.password = password;
+        self.passwordType = passwordType;
+        self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
+        self.setPassword(password);
     }
 
-    public function buildToken(string username, string password, string pwType) returns string|error = @java:Method {
-        'class: "org.wssecurity.UsernameToken"
+
+    public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
+        self.signatureAlgorithm = signatureAlgorithm;
+    }
+
+    public function getUsername() returns string {
+        return self.username;
+    }
+
+    public function getPassword() returns string {
+        return self.password;
+    }
+
+    public function getPasswordType() returns string {
+        return self.passwordType;
+    }
+
+    public function setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+        self.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
+        return self.encryptionAlgorithm;
+    }
+    public function populateHeaderData(string username, string password, string pwType,
+                                       Encryption encData, Signature signValue, AuthType authType = NONE)
+                                       returns string|Error = @java:Method {
+        'class: "org.wssec.UsernameToken"
+    } external;
+
+    public function setPassword(string password) = @java:Method {
+        'class: "org.wssec.UsernameToken"
+    } external;
+
+    public function getEncryptedData() returns byte[] = @java:Method {
+        'class: "org.wssec.UsernameToken"
+    } external;
+
+    public function getSignatureData() returns byte[] = @java:Method {
+        'class: "org.wssec.UsernameToken"
     } external;
 }
 
-function newToken(WSSecurityHeader wsSecHeader) returns handle = @java:Constructor {
-    'class: "org.wssecurity.UsernameToken"
+function newToken(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) 
+    returns handle = @java:Constructor {
+    'class: "org.wssec.UsernameToken"
 } external;

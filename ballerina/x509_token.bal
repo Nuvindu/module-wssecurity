@@ -13,14 +13,23 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package org.wssecurity;
 
-public class Constants {
-    public static final int ITERATION = 1000;
-    public static final String TEXT = "TEXT";
-    public static final String SIGNATURE = "SIGNATURE";
-    public static final String DIGEST = "DIGEST";
-    public static final String ENCRYPT = "ENCRYPT";
-    public static final String SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT";
+import ballerina/jballerina.java;
 
+public class X509Token {
+    *Token;
+    private handle nativeX509Token;
+
+    public function init(string filePath) returns Error? {
+        self.'type = X509_TOKEN;
+        self.nativeX509Token = check newX509Token(filePath);
+    }
+
+    public function addX509Token(UsernameToken usernameToken) = @java:Method {
+        'class: "org.wssec.X509SecToken"
+    } external;
 }
+
+function newX509Token(string filePath) returns handle|Error = @java:Constructor {
+    'class: "org.wssec.X509SecToken"
+} external;

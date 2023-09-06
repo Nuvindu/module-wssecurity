@@ -13,7 +13,8 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package org.wssecurity;
+
+package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
@@ -21,6 +22,7 @@ import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -35,26 +37,46 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-public class DocBuilder {
+import static org.wssec.Constants.NATIVE_DOCUMENT;
+import static org.wssec.Constants.SOAP_BODY_TAG;
+import static org.wssec.Utils.createError;
 
+public class DocumentBuilder {
     private final Document document;
 
-    public DocBuilder(BString xmlPayload) throws ParserConfigurationException, IOException, SAXException {
+    public DocumentBuilder(BString xmlPayload) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        this.document = factory.newDocumentBuilder().parse(new InputSource(new StringReader(xmlPayload.getValue())));
+        try {
+            this.document = factory.newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(xmlPayload.getValue())));
+        } catch (SAXException | IOException | ParserConfigurationException e) {
+            throw createError(e.getMessage());
+        }
     }
 
-    protected DocBuilder(Document document) {
+    protected DocumentBuilder(Document document) {
         this.document = document;
     }
 
     public static Object getDocument(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
-        DocBuilder docBuilder = (DocBuilder) handle.getValue();
-        Document document1 = docBuilder.getNativeDocument();
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
+        Document document = docBuilder.getNativeDocument();
         try {
-            return StringUtils.fromString(convertDocumentToString(document1));
+            return StringUtils.fromString(convertDocumentToString(document));
+        } catch (Exception e) {
+            return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
+        }
+    }
+
+    public static Object getEnvelopeBody(BObject documentBuilder) {
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
+        Document document = docBuilder.getNativeDocument();
+        NodeList digestValueList = document.getElementsByTagName(SOAP_BODY_TAG);
+        try {
+            return StringUtils.fromString(digestValueList.item(0).getFirstChild().getTextContent());
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }

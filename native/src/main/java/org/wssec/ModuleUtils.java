@@ -14,5 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Represents any error related to the wssec module.
-public type Error distinct error;
+package org.wssec;
+
+import io.ballerina.runtime.api.Environment;
+import io.ballerina.runtime.api.Module;
+
+public class ModuleUtils {
+    private static Module module;
+
+    private ModuleUtils() {}
+
+    public static void setModule(Environment environment) {
+        module = environment.getCurrentModule();
+    }
+
+    public static Module getModule() {
+        return module;
+    }
+}

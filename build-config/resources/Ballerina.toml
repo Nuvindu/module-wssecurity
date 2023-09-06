@@ -1,12 +1,12 @@
 [package]
 org = "nuvindu"
-name = "wssecurity"
-version = "1.0.1"
+name = "wssec"
+version = "0.0.1"
 authors = ["Ballerina"]
-keywords = ["wssecurity"]
+keywords = ["wssec"]
 icon = "icon.png"
 license = ["Apache-2.0"]
-distribution = "2201.8.0-20230726-145300-b2bdf796"
+distribution = "2201.8.0-20230830-220400-8a7556d8"
 
 [build-options]
 observabilityIncluded = true
@@ -15,7 +15,7 @@ observabilityIncluded = true
 graalvmCompatible = true
 
 [[platform.java17.dependency]]
-path = "../native/build/libs/wssecurity-native-1.0.1-SNAPSHOT.jar"
+path = "../native/build/libs/wssec-native-1.0.1-SNAPSHOT.jar"
 
 [[platform.java17.dependency]]
 path = "./lib/wss4j-ws-security-dom-3.0.1.jar"

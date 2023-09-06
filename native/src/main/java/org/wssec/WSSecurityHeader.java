@@ -13,30 +13,46 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package org.wssecurity;
+
+package org.wssec;
 
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import org.apache.wss4j.common.ext.WSSecurityException;
 import org.apache.wss4j.dom.message.WSSecHeader;
+import org.w3c.dom.Document;
+
+import static org.wssec.Constants.NATIVE_DOCUMENT;
+import static org.wssec.Constants.NATIVE_SEC_HEADER;
+import static org.wssec.Utils.createError;
 
 public class WSSecurityHeader {
     private final WSSecHeader wsSecHeader;
+    private final Document document;
 
     public WSSecurityHeader(BObject documentBuilder) {
-        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString("nativeDoc"));
-        DocBuilder docBuilder = (DocBuilder) handle.getValue();
+        BHandle handle = (BHandle) documentBuilder.get(StringUtils.fromString(NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
         this.wsSecHeader = new WSSecHeader(docBuilder.getNativeDocument());
+        this.document = docBuilder.getNativeDocument();
+    }
+
+    protected Document getDocument() {
+        return document;
     }
 
     protected WSSecHeader getWsSecHeader() {
         return wsSecHeader;
     }
 
-    public static void insertSecHeader(BObject secHeader) throws WSSecurityException {
-        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString("nativeSecHeader"));
+    public static void insertSecHeader(BObject secHeader) {
+        BHandle handle = (BHandle) secHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
         WSSecurityHeader wsSecurityHeader = (WSSecurityHeader) handle.getValue();
-        wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
+        try {
+            wsSecurityHeader.getWsSecHeader().insertSecurityHeader();
+        } catch (WSSecurityException e) {
+            throw createError(e.getMessage());
+        }
     }
 }
