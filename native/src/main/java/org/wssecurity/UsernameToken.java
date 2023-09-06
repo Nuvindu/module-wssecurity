@@ -54,7 +54,12 @@ import static org.wssecurity.Constants.SIGN_AND_ENCRYPT;
 public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
-    private final Signature signature;
+
+    private String username;
+    private String password;
+    private String passwordType;
+    private final String signAlgo;
+    private final String encAlgo;
     private final Document document;
     private X509SecToken x509SecToken = null;
 
@@ -62,20 +67,56 @@ public class UsernameToken {
         return document;
     }
 
-    protected Signature getSignature() {
-        return signature;
-    }
-
-    public UsernameToken(BObject wsSecurityHeader) {
-        BHandle handle = (BHandle) wsSecurityHeader.get(StringUtils.fromString("nativeSecHeader"));
+    public UsernameToken(BObject wsSecurityHeader, BString signatureAlgo, BString encryptionAlgo) {
+        BHandle handle = (BHandle) wsSecurityHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
         WSSecurityHeader securityHeader = (WSSecurityHeader) handle.getValue();
         this.usernameToken = new WSSecUsernameToken(securityHeader.getWsSecHeader());
-        this.signature = new Signature();
+        this.signAlgo = signatureAlgo.getValue();
+        this.encAlgo = encryptionAlgo.getValue();
         this.document = securityHeader.getDocument();
     }
+
+    public static void setUsername(BObject userToken, BString username) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setUsername(username.getValue());
+    }
+
+    public static void setPassword(BObject userToken, BString password) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setPassword(password.getValue());
+    }
+
+    public static void setPasswordType(BObject userToken, BString passwordType) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        usernameTokenObj.setPasswordType(passwordType.getValue());
+    }
+
+    protected String getUsername() {
+        return username;
+    }
+
+    protected void setUsername(String username) {
+        this.username = username;
+    }
+
+    protected String getPassword() {
+        return password;
+    }
+
+    protected void setPassword(String password) {
+        this.password = password;
+    }
+
+    protected String getPasswordType() {
+        return passwordType;
+    }
+
+    protected void setPasswordType(String passwordType) {
+        this.passwordType = passwordType;
+    }
 
     protected WSSecUsernameToken getUsernameToken() {
         return usernameToken;
