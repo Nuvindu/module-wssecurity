@@ -13,29 +13,32 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
 import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.util.UsernameTokenUtil;
-import org.apache.wss4j.dom.WSConstants;
+import org.apache.wss4j.dom.WSDocInfo;
 import org.apache.wss4j.dom.engine.WSSConfig;
 import org.apache.wss4j.dom.handler.RequestData;
 import org.apache.wss4j.dom.message.WSSecUsernameToken;
 import org.w3c.dom.Document;
 
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_DIGEST;
 import static org.apache.wss4j.common.WSS4JConstants.PASSWORD_TEXT;
 import static org.wssecurity.Constants.DERIVED_KEY_DIGEST;
@@ -50,6 +53,7 @@ import static org.wssecurity.Constants.NATIVE_UT;
 import static org.wssecurity.Constants.NONE;
 import static org.wssecurity.Constants.SIGNATURE;
 import static org.wssecurity.Constants.SIGN_AND_ENCRYPT;
+import static org.wssecurity.Utils.createError;
 
 public class UsernameToken {
 
