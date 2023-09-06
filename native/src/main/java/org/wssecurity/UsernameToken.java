@@ -81,50 +81,36 @@ public class UsernameToken {
         return usernameToken;
     }
 
-//    protected X509Certificate getX509Certificate() {
-//        return (x509SecToken == null) ? null : x509SecToken.getX509Certificate();
-//    }
-//
-//    protected String getSignatureAlgorithm() {
-//        return (x509SecToken == null) ? SignatureMethod.HMAC_SHA1 : x509SecToken.getSignatureAlgoName();
-//    }
+    public String getSignAlgo() {
+        return signAlgo;
+    }
+
+    public String getEncAlgo() {
+        return encAlgo;
+    }
 
     protected void setX509Token(X509SecToken x509SecToken) {
         this.x509SecToken =  x509SecToken;
     }
 
-    protected int getKeyIdentifierType() {
-        return (x509SecToken == null) ? WSConstants.CUSTOM_SYMM_SIGNING : WSConstants.X509_KEY_IDENTIFIER;
+    public X509SecToken getX509SecToken() {
+        return x509SecToken;
     }
 
     protected Crypto getCryptoProperties() {
         return (x509SecToken == null) ? null : x509SecToken.getCryptoProperties();
     }
 
+    public static BArray getEncryptedData(BObject userToken) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
         UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
-        WSSecUsernameToken usernameToken = usernameTokenObj.getUsernameToken();
-        byte[] salt = UsernameTokenUtil.generateSalt(true);
-        try {
-            Document doc;
-            if (pwType.getValue().equals(Constants.SIGNATURE)) {
-                doc = addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                                            pwType.getValue(), salt, null);
-            } else if (pwType.getValue().equals(Constants.ENCRYPT)) {
-                setConfigs(usernameToken, Constants.DIGEST, username.getValue(), password.getValue());
-                buildDocument(usernameToken, pwType.getValue());
-                Encryption encryption = (new Encryption(WSConstants.AES_128));
-                doc = encryption.encryptEnv(usernameToken, salt);
-            } else if (pwType.getValue().equals(Constants.SIGN_AND_ENCRYPT)) {
-                addSignatureWithToken(usernameTokenObj, username.getValue(), password.getValue(),
-                        pwType.getValue(), salt, null);
-                Encryption encryption = (new Encryption(WSConstants.AES_128));
-                doc = encryption.encryptEnv(usernameToken, salt);
-            } else {
-                setConfigs(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
-                doc = buildDocument(usernameToken, pwType.getValue());
+        return ValueCreator.createArrayValue(WSSecurityUtils.getEncryptedData(usernameTokenObj.getDocument()));
             }
+
+    public static BArray getSignatureData(BObject userToken) {
         BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
+        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
+        return ValueCreator.createArrayValue(WSSecurityUtils.getSignatureValue(usernameTokenObj.getDocument()));
     }
 
     public static Object populateHeaderData(BObject userToken, BString username, BString password,
