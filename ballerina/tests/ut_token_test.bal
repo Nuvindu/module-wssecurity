@@ -279,14 +279,64 @@ function testUsernameTokenWithX509Token1() returns error? {
 function testUsernameTokenWithSymmetricBinding() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
 
-    Envelope env = check new(xmlPayload);
-    error? securityHeader = env.addSecurityHeader();
+    Envelope env = check new (xmlPayload);
+    Error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
+    string soapBody = check env.getEnvelopeBody();
 
-    error? symmetricBinding = env.addSymmetricBinding("wss40", "security", "wss40.properties");
-    test:assertEquals(symmetricBinding, ());
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    // io:println(env.generateEnvelope());
+    string securedEnvelope = check env.applySymmetricBinding(USERNAME, PASSWORD, symmetricKey, RSA_ECB, RSA_SHA256);
+    byte[] signedData = <byte[]>env.getSignatureData();
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    byte[] encData = <byte[]>env.getEncryptedData();
+    byte[]|Error decryptData = env.decryptData(encData, RSA_ECB, publicKey);
+    test:assertEquals(soapBody, check string:fromBytes(check decryptData));
+
+    assertSignatureWithoutX509(securedEnvelope);
+    assertEncryptedPart(securedEnvelope);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "symmetric_binding", "x509"]
+}
+function testUsernameTokenWithSymmetricBindingWithX509() returns error? {
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+
+    Envelope env = check new (xmlPayload);
+    Error? securityHeader = env.addSecurityHeader();
+    test:assertEquals(securityHeader, ());
+    string soapBody = check env.getEnvelopeBody();
+
+    crypto:KeyStore keyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    X509Token x509Token = check new (X509_PUBLIC_CERT_PATH);
+    string securedEnvelope = check env.applySymmetricBinding(USERNAME, PASSWORD, symmetricKey, RSA_ECB, RSA_SHA256, x509Token);
+
+    byte[] signedData = <byte[]>env.getSignatureData();
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    byte[] encData = <byte[]>env.getEncryptedData();
+    byte[]|Error decryptData = env.decryptData(encData, RSA_ECB, publicKey);
+    test:assertEquals(soapBody, check string:fromBytes(check decryptData));
+
+    assertSignatureWithX509(securedEnvelope);
+    assertEncryptedPart(securedEnvelope);
 }
 
 @test:Config {
