@@ -13,84 +13,58 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 package org.wssecurity;
 
-import org.apache.wss4j.common.WSEncryptionPart;
-import org.apache.wss4j.common.ext.WSSecurityException;
-import org.apache.wss4j.common.util.UsernameTokenUtil;
-import org.apache.wss4j.dom.WSConstants;
-import org.apache.wss4j.dom.WSDocInfo;
-import org.apache.wss4j.dom.handler.RequestData;
-import org.apache.wss4j.dom.message.WSSecSignature;
-import org.apache.wss4j.dom.util.WSSecurityUtil;
-import org.w3c.dom.Document;
+import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BHandle;
+import io.ballerina.runtime.api.values.BObject;
+import io.ballerina.runtime.api.values.BString;
 
 import static org.wssecurity.Constants.NATIVE_SIGNATURE;
 
 public class Signature {
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
-        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+    private String signatureAlgorithm;
+    private byte[] signatureValue;
 
-    public void buildSignature(RequestData reqData, WSSecSignature sign) throws Exception {
-        List<WSEncryptionPart> parts = null;
-        parts = new ArrayList<>(1);
-        Document doc = reqData.getSecHeader().getSecurityHeaderElement().getOwnerDocument();
-        parts.add(WSSecurityUtil.getDefaultEncryptionPart(doc));
-        List<Reference> referenceList = sign.addReferencesToSign(parts);
-        sign.computeSignature(referenceList);
-        reqData.getSignatureValues().add(sign.getSignatureValue());
+    public Signature(BString signatureAlgorithm) {
+        this.signatureAlgorithm = signatureAlgorithm.getValue();
+        this.signatureValue =  new byte[0];
     }
 
-    public WSSecSignature prepareSignature(RequestData reqData,
-                                           UsernameToken usernameToken) throws WSSecurityException {
-        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(usernameToken.getUsernameToken().getDerivedKey(salt));
-        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
-        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-//        sign.setX509Certificate(usernameToken.getX509Certificate());
-//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
-//        TODO - Add support for different signature methods
-        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
-        sign.setUserInfo("wss40", "security");
-//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
-        sign.prepare(usernameToken.getCryptoProperties());
-        return sign;
+    public static void setSignatureAlgorithm(BObject sign, BString signatureAlgorithm) {
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        Signature signature = (Signature) handle.getValue();
+        signature.setSignatureAlgorithm(signatureAlgorithm.getValue());
     }
 
-    public WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                           byte[] privateKey) throws WSSecurityException {
-        WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-//        byte[] salt = UsernameTokenUtil.generateSalt(reqData.isUseDerivedKeyForMAC());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenValueType(WSConstants.USERNAMETOKEN_NS + "#UsernameToken");
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        sign.setSecretKey(privateKey);
-        sign.setWsDocInfo(new WSDocInfo(usernameToken.getDocument()));
-        sign.setKeyIdentifierType(usernameToken.getKeyIdentifierType());
-//        sign.setX509Certificate(usernameToken.getX509Certificate());
-//        sign.setKeyIdentifierType(WSConstants.X509_KEY_IDENTIFIER);
-//        TODO - Add support for different signature methods
-        sign.setSignatureAlgorithm(WSConstants.HMAC_SHA1);
-        sign.setUserInfo("wss40", "security");
-//        sign.prepare(CryptoFactory.getInstance("wss40.properties"));
-        sign.prepare(usernameToken.getCryptoProperties());
-        return sign;
+    public static void setSignatureValue(BObject sign, BArray signatureValue) {
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        Signature signature = (Signature) handle.getValue();
+        signature.setSignatureValue(signatureValue.getByteArray());
     }
 
-//    public String addElement(WSSecHeader wsSecHeader) throws Exception {
-//
-//        Element secHeaderElem = wsSecHeader.getSecurityHeaderElement();
-//        Node nd = secHeaderElem.getOwnerDocument()
-//                .createElementNS("http://schemas.xmlsoap.org/ws/2005/07/securitypolicy",
-//                        "wsp:Policy");
-//        secHeaderElem.appendChild(nd);
-//        return UsernameToken.convertDocumentToString(secHeaderElem.getOwnerDocument());
-//    }
+    public static BArray getSignatureValue(BObject sign) {
+        BHandle handle = (BHandle) sign.get(StringUtils.fromString(NATIVE_SIGNATURE));
+        Signature signature = (Signature) handle.getValue();
+        return ValueCreator.createArrayValue(signature.getSignatureValue());
+    }
+
+    protected String getSignatureAlgorithm() {
+        return signatureAlgorithm;
+    }
+
+    protected void setSignatureAlgorithm(String signatureAlgorithm) {
+        this.signatureAlgorithm = signatureAlgorithm;
+    }
+
+    protected byte[] getSignatureValue() {
+        return signatureValue;
+    }
+
+    protected void setSignatureValue(byte[] signatureValue) {
+        this.signatureValue = signatureValue;
+    }
 }
