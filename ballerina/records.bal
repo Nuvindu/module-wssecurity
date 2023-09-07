@@ -17,45 +17,63 @@
 import ballerina/crypto;
 
 public type UTRecord record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
     X509Token|string? x509Token = ();
 |};
 
 public type TSRecord record {|
+    string envelope;
     int timeToLive = 300;
 |};
 
 public type X509Record record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
     X509Token|string x509Token;
 |};
 
 public type UTEncryption record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
     crypto:PublicKey|crypto:PrivateKey? encryptionKey = ();
     EncryptionAlgorithm encryptionAlgorithm;
     X509Token|string? x509Token = ();
 |};
 
 public type UTSignature record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
     crypto:PrivateKey signatureKey;
     SignatureAlgorithm signatureAlgorithm;
     X509Token|string? x509Token = ();
 |};
 
-public type UTSymmetricBinding record {|
+public type UTSignAndEncrypt record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
+    crypto:PrivateKey signatureKey;
+    crypto:PublicKey|crypto:PrivateKey encryptionKey;
+    SignatureAlgorithm signatureAlgorithm;
+    EncryptionAlgorithm encryptionAlgorithm;
+    X509Token|string? x509Token = ();
+|};
+
+public type UTSymmetricBinding record {|
+    string envelope;
+    string username;
+    string password;
+    PasswordType passwordType;
     crypto:PrivateKey symmetricKey;
     SignatureAlgorithm signatureAlgorithm;
     EncryptionAlgorithm encryptionAlgorithm;
@@ -63,9 +81,10 @@ public type UTSymmetricBinding record {|
 |};
 
 public type UTAsymmetricBinding record {|
+    string envelope;
     string username;
     string password;
-    string passwordType;
+    PasswordType passwordType;
     crypto:PrivateKey senderPrivateKey;
     crypto:PublicKey receiverPublicKey;
     SignatureAlgorithm signatureAlgorithm;

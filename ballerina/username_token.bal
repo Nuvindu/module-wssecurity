@@ -23,9 +23,10 @@ public class UsernameToken {
     private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
     private string username;
     private string password;
-    private string passwordType;
+    private PasswordType passwordType;
+    private AuthType authType = NONE;
 
-    public function init(WSSecurityHeader wsSecHeader, string username, string password, string passwordType) {
+    public function init(WSSecurityHeader wsSecHeader, string username, string password, PasswordType passwordType) {
         self.'type = USERNAME_TOKEN;
         self.username = username;
         self.password = password;
@@ -34,6 +35,13 @@ public class UsernameToken {
         self.setPassword(password);
     }
 
+    public function setAuthType(AuthType authType) {
+        self.authType = authType;
+    }
+
+    public function getAuthType() returns AuthType {
+        return self.authType;
+    }
 
     public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
         self.signatureAlgorithm = signatureAlgorithm;

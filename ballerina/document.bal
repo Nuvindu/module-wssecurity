@@ -30,6 +30,14 @@ public class Document {
     public function getEnvelopeBody() returns string|Error = @java:Method {
         'class: "org.wssec.DocumentBuilder"
     } external;
+
+    public function getEncryptedData() returns byte[] = @java:Method {
+        'class: "org.wssec.DocumentBuilder"
+    } external;
+
+    public function getSignatureData() returns byte[] = @java:Method {
+        'class: "org.wssec.DocumentBuilder"
+    } external;
 }
 
 function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {

@@ -20,16 +20,18 @@ import ballerina/test;
     groups: ["timestamp_token"]
 }
 function testTimestampToken() returns error? {
-    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-    Envelope env = check new (xmlPayload);
-    string generateEnvelope = check env.applyTimestampToken(timeToLive = 600);
+    string envelope = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+    string|Error securedEnvelope = applyTimestampToken(envelope = envelope, timeToLive = 600);
+    test:assertTrue(securedEnvelope is string);
 
-    string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
-    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-    string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
-    test:assertTrue(generateEnvelope.includesMatch(ts_token));
-    test:assertTrue(generateEnvelope.includesMatch(created));
-    test:assertTrue(generateEnvelope.includesMatch(expires));
+    if securedEnvelope is string {
+        string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
+        string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
+        string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
+        test:assertTrue(securedEnvelope.includesMatch(ts_token));
+        test:assertTrue(securedEnvelope.includesMatch(created));
+        test:assertTrue(securedEnvelope.includesMatch(expires));
+    }
 }
 
 @test:Config {
@@ -37,11 +39,11 @@ function testTimestampToken() returns error? {
 }
 function testTimestampTokenIncorrectTimeError() returns error? {
     string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-    Envelope env = check new (xmlPayload);
     TSRecord tsRecord = {
+        envelope: xmlPayload,
         timeToLive: -1
     };
-    string|Error generateEnvelope = env.applyTimestampToken(tsRecord);
+    string|Error generateEnvelope = applyTimestampToken(tsRecord);
 
     test:assertTrue(generateEnvelope is Error);
     if generateEnvelope is Error {

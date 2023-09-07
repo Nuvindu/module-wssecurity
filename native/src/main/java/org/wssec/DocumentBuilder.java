@@ -17,7 +17,9 @@
 package org.wssec;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
+import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
@@ -80,6 +82,18 @@ public class DocumentBuilder {
         } catch (Exception e) {
             return ErrorCreator.createError(StringUtils.fromString(e.getMessage()));
         }
+    }
+
+    public static BArray getSignatureData(BObject document) {
+        BHandle handle = (BHandle) document.get(StringUtils.fromString(NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
+        return ValueCreator.createArrayValue(WSSecurityUtils.getSignatureValue(docBuilder.getNativeDocument()));
+    }
+
+    public static BArray getEncryptedData(BObject document) {
+        BHandle handle = (BHandle) document.get(StringUtils.fromString(NATIVE_DOCUMENT));
+        DocumentBuilder docBuilder = (DocumentBuilder) handle.getValue();
+        return ValueCreator.createArrayValue(WSSecurityUtils.getEncryptedData(docBuilder.getNativeDocument()));
     }
 
     protected Document getNativeDocument() {
