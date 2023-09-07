@@ -75,16 +75,6 @@ function addX509Token(string|X509Token x509certToken, UsernameToken ut) returns 
     return ut;
 }
 
-public function getEncryptedData(xml envelope) returns byte[]|Error {
-    Document document = check new (envelope);
-    return document.getEncryptedData();
-}
-
-public function getSignatureData(xml envelope) returns byte[]|Error {
-    Document document = check new (envelope);
-    return document.getSignatureData();
-}
-
 function generateEnvelope(Token token, Encryption encryption = check new, 
                                     Signature signature = check new) returns xml|Error {
     if token is TimestampToken {
@@ -107,6 +97,28 @@ function generateEnvelope(Token token, Encryption encryption = check new,
     return error("WS Security policy headers are not set.");
 }
 
+# Returns the encrypted data of the SOAP envelope.
+#
+# + envelope - The SOAP envelope
+# + return - A `byte[]` if the encrypted data is successfully decoded or else `wssec:Error`
+public function getEncryptedData(xml envelope) returns byte[]|Error {
+    Document document = check new (envelope);
+    return document.getEncryptedData();
+}
+
+# Returns the signed data of the SOAP envelope.
+#
+# + envelope - The SOAP envelope
+# + return - A `byte[]` if the signed data is successfully decoded or else `wssec:Error`
+public function getSignatureData(xml envelope) returns byte[]|Error {
+    Document document = check new (envelope);
+    return document.getSignatureData();
+}
+
+# Apply timestamp token security policy to the SOAP envelope.
+# 
+# + tsRecord - The `TSRecord` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyTimestampToken(*TSRecord tsRecord) returns xml|Error {
     Document document = check new(tsRecord.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -114,6 +126,10 @@ public function applyTimestampToken(*TSRecord tsRecord) returns xml|Error {
     return check generateEnvelope(timestampToken);
 }
 
+# Apply username token security policy to the SOAP envelope.
+# 
+# + utRecord - The `UTRecord` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyUsernameToken(*UTRecord utRecord) returns xml|Error {
     Document document = check new(utRecord.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -122,6 +138,10 @@ public function applyUsernameToken(*UTRecord utRecord) returns xml|Error {
     return generateEnvelope(usernameToken);
 }
 
+# Apply X509 token security policy with username token to the SOAP envelope.
+# 
+# + x509Record - The `X509Record` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyX509Token(*X509Record x509Record) returns xml|Error {
     Document document = check new(x509Record.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -131,6 +151,10 @@ public function applyX509Token(*X509Record x509Record) returns xml|Error {
     return generateEnvelope(usernameTokenWithX509);
 }
 
+# Apply username token security policy with signature to the SOAP envelope.
+# 
+# + utSignature - The `UTSignature` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyUTSignature(*UTSignature utSignature) returns xml|Error {
     Document document = check new(utSignature.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -147,6 +171,10 @@ public function applyUTSignature(*UTSignature utSignature) returns xml|Error {
     return check generateEnvelope(usernameToken, signature = signatureResult);
 }
 
+# Apply username token security policy with encryption to the SOAP envelope.
+# 
+# + utEncryption - The `UTEncryption` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyUTEncryption(*UTEncryption utEncryption) returns xml|Error {
     Document document = check new(utEncryption.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -164,6 +192,10 @@ public function applyUTEncryption(*UTEncryption utEncryption) returns xml|Error 
     return generateEnvelope(usernameToken, encryptionResult);
 }
 
+# Apply username token security policy with signature and encryption to the SOAP envelope.
+# 
+# + utSignAndEncrypt - The `UTSignAndEncrypt` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) returns xml|Error {
     Document document = check new(utSignAndEncrypt.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -187,6 +219,10 @@ public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) return
     return generateEnvelope(usernameToken, encryptionResult, signatureResult);
 }
 
+# Apply symmetric binding security policy with username token to the SOAP envelope.
+# 
+# + utSymmetricBinding - The `UTSymmetricBinding` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding) returns xml|Error {
     Document document = check new(utSymmetricBinding.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
@@ -210,6 +246,10 @@ public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding) re
     return generateEnvelope(usernameToken, encryptionResult, signatureResult);
 }
 
+# Apply asymmetric binding security policy with Username token to the SOAP envelope.
+# 
+# + utAsymmetricBinding - The `UTAsymmetricBinding` record with the required parameters
+# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
 public function applyAsymmetricBinding(*UTAsymmetricBinding utAsymmetricBinding) returns xml|Error {
     Document document = check new(utAsymmetricBinding.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
