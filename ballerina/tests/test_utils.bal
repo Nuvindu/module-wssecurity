@@ -24,11 +24,11 @@ const string KEY_PASSWORD = "security";
 
 const string PUBLIC_KEY_PATH = "tests/resources/public_key.cer";
 const string PRIVATE_KEY_PATH = "tests/resources/private_key.pem";
-const string KEY_STORE_PATH = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/keys/wss40.p12";
+const string KEY_STORE_PATH = "../native/src/main/resources/keys/wss40.p12";
 const string X509_PUBLIC_CERT_PATH = "tests/resources/x509_certificate.crt";
 const string X509_PUBLIC_CERT_PATH_2 = "tests/resources/x509_certificate_2.crt";
-const string X509_KEY_STORE_PATH = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/x509_certificate.p12";
-const string X509_KEY_STORE_PATH_2 = "/Users/nuvindu/Ballerina/soap/module-wssecurity/ballerina/tests/resources/x509_certificate_2.p12";
+const string X509_KEY_STORE_PATH = "../native/src/main/resources/x509_certificate.p12";
+const string X509_KEY_STORE_PATH_2 = "tests/resources/x509_certificate_2.p12";
 
 function assertSignatureWithX509(string securedEnvelope) {
     string:RegExp keyIdentifier = re `<wsse:KeyIdentifier EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3">.*</wsse:KeyIdentifier>`;
