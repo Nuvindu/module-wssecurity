@@ -48,7 +48,7 @@ function testTimestampToken() returns error? {
 @test:Config {
     groups: ["timestamp_token", "error"]
 }
-function testTimestampTokenIncorrectTimeError() returns error? {
+function testTimestampTokenWithIncorrectTimeError() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -62,14 +62,12 @@ function testTimestampTokenIncorrectTimeError() returns error? {
                 </person>
             </soap:Body>
         </soap:Envelope>`;
-
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     TSRecord tsRecord = {
         envelope: envelope,
         timeToLive: -1
     };
     xml|Error generateEnvelope = applyTimestampToken(tsRecord);
-
     test:assertTrue(generateEnvelope is Error);
     if generateEnvelope is Error {
         test:assertEquals(generateEnvelope.message(), "Invalid value for `timeToLive`");
