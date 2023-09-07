@@ -6,7 +6,7 @@ authors = ["Ballerina"]
 keywords = ["wssec"]
 icon = "icon.png"
 license = ["Apache-2.0"]
-distribution = "2201.8.0-20230830-220400-8a7556d8"
+distribution = "2201.8.0"
 
 [build-options]
 observabilityIncluded = true
