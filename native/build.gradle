@@ -27,10 +27,10 @@ dependencies {
     checkstyle project(':checkstyle')
     checkstyle "com.puppycrawl.tools:checkstyle:${puppycrawlCheckstyleVersion}"
     implementation group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
+    implementation 'com.google.guava:guava:32.1.1-jre'
     implementation 'org.apache.wss4j:wss4j-ws-security-dom:3.0.1'
     implementation 'org.apache.santuario:xmlsec:3.0.2'
     implementation 'org.apache.wss4j:wss4j-ws-security-common:3.0.1'
-
 }
 
 checkstyle {
