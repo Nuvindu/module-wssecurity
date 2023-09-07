@@ -79,6 +79,7 @@ subprojects {
         ballerinaStdLibs "io.ballerina.stdlib:time-ballerina:${stdlibTimeVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:crypto-ballerina:${stdlibCryptoVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:random-ballerina:${stdlibRandomVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:regex-ballerina:${stdlibRegexVersion}"
 
         externalJars (group: 'org.apache.wss4j', name: 'wss4j-ws-security-dom', version: "${wsSecurityDomVersion}") {
             transitive = false
