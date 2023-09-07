@@ -20,30 +20,55 @@ import ballerina/test;
     groups: ["timestamp_token"]
 }
 function testTimestampToken() returns error? {
-    string envelope = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-    string|Error securedEnvelope = applyTimestampToken(envelope = envelope, timeToLive = 600);
-    test:assertTrue(securedEnvelope is string);
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
 
-    if securedEnvelope is string {
-        string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
-        string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-        string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
-        test:assertTrue(securedEnvelope.includesMatch(ts_token));
-        test:assertTrue(securedEnvelope.includesMatch(created));
-        test:assertTrue(securedEnvelope.includesMatch(expires));
-    }
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    xml securedEnvelope = check applyTimestampToken(envelope = envelope, timeToLive = 600);
+    string envelopeString = (securedEnvelope/<soap:Header>/*).toBalString();
+    string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
+    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
+    string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
+    test:assertTrue(envelopeString.includesMatch(ts_token));
+    test:assertTrue(envelopeString.includesMatch(created));
+    test:assertTrue(envelopeString.includesMatch(expires));
 }
 
 @test:Config {
     groups: ["timestamp_token", "error"]
 }
 function testTimestampTokenIncorrectTimeError() returns error? {
-    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     TSRecord tsRecord = {
-        envelope: xmlPayload,
+        envelope: envelope,
         timeToLive: -1
     };
-    string|Error generateEnvelope = applyTimestampToken(tsRecord);
+    xml|Error generateEnvelope = applyTimestampToken(tsRecord);
 
     test:assertTrue(generateEnvelope is Error);
     if generateEnvelope is Error {

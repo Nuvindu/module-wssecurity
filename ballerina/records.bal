@@ -17,7 +17,7 @@
 import ballerina/crypto;
 
 public type UTRecord record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -25,12 +25,12 @@ public type UTRecord record {|
 |};
 
 public type TSRecord record {|
-    string envelope;
+    xml envelope;
     int timeToLive = 300;
 |};
 
 public type X509Record record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -38,7 +38,7 @@ public type X509Record record {|
 |};
 
 public type UTEncryption record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -48,7 +48,7 @@ public type UTEncryption record {|
 |};
 
 public type UTSignature record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -58,7 +58,7 @@ public type UTSignature record {|
 |};
 
 public type UTSignAndEncrypt record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -70,7 +70,7 @@ public type UTSignAndEncrypt record {|
 |};
 
 public type UTSymmetricBinding record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;
@@ -81,7 +81,7 @@ public type UTSymmetricBinding record {|
 |};
 
 public type UTAsymmetricBinding record {|
-    string envelope;
+    xml envelope;
     string username;
     string password;
     PasswordType passwordType;

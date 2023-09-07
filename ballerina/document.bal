@@ -19,7 +19,7 @@ import ballerina/jballerina.java;
 public class Document {
     private handle nativeDocumentBuilder;
 
-    public function init(string xmlPayload) returns Error? {
+    public function init(xml xmlPayload) returns Error? {
         self.nativeDocumentBuilder = check newDocument(xmlPayload);
     }
 
@@ -40,6 +40,6 @@ public class Document {
     } external;
 }
 
-function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {
+function newDocument(xml xmlPayload) returns handle|Error = @java:Constructor {
     'class: "org.wssec.DocumentBuilder"
 } external;

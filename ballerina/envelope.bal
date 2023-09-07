@@ -15,7 +15,7 @@
 // under the License.
 
 import ballerina/crypto;
-
+import ballerina/regex;
 
 public function addSecurityHeader(Document document) returns WSSecurityHeader|Error {
     WSSecurityHeader wsSecHeader = check new (document);
@@ -26,7 +26,7 @@ public function addSecurityHeader(Document document) returns WSSecurityHeader|Er
     return insertHeader;
 }
 
-public function getEnvelopeBody(string envelope) returns string|Error {
+public function getEnvelopeBody(xml envelope) returns string|Error {
     Document document = check new (envelope);
     return document.getEnvelopeBody();
 }
@@ -75,36 +75,46 @@ public function addX509Token(string|X509Token x509certToken, UsernameToken ut) r
     return ut;
 }
 
-public function getEncryptedData(string envelope) returns byte[]|Error {
+public function getEncryptedData(xml envelope) returns byte[]|Error {
     Document document = check new (envelope);
     return document.getEncryptedData();
 }
 
-public function getSignatureData(string envelope) returns byte[]|Error {
+public function getSignatureData(xml envelope) returns byte[]|Error {
     Document document = check new (envelope);
     return document.getSignatureData();
 }
 
 public function generateEnvelope(Token token, Encryption encryption = check new, 
-                                    Signature signature = check new) returns string|Error {
+                                    Signature signature = check new) returns xml|Error {
     if token is TimestampToken {
-        return token.addTimestamp();
+        string envelope = check token.addTimestamp();
+        do {
+            return check xml:fromString(regex:replace(envelope, string`<?.*?><`, "<"));
+        } on fail var e {
+        	return error Error(e.message());
+        }
     }
     if token is UsernameToken {
-        return check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(),
+        string envelope = check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(),
                                               encryption, signature, token.getAuthType());
+        do {
+            return check xml:fromString(regex:replace(envelope, string`<?.*?><`, "<"));
+        } on fail var e {
+        	return error Error(e.message());
+        }
     }
     return error("WS Security policy headers are not set.");
 }
 
-public function applyTimestampToken(*TSRecord tsRecord) returns string|Error {
+public function applyTimestampToken(*TSRecord tsRecord) returns xml|Error {
     Document document = check new(tsRecord.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     TimestampToken timestampToken = check addTimestampToken(wSSecurityHeader, tsRecord.timeToLive);
     return check generateEnvelope(timestampToken);
 }
 
-public function applyUsernameToken(*UTRecord utRecord) returns string|Error {
+public function applyUsernameToken(*UTRecord utRecord) returns xml|Error {
     Document document = check new(utRecord.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utRecord.username,
@@ -112,7 +122,7 @@ public function applyUsernameToken(*UTRecord utRecord) returns string|Error {
     return generateEnvelope(usernameToken);
 }
 
-public function applyX509Token(*X509Record x509Record) returns string|Error {
+public function applyX509Token(*X509Record x509Record) returns xml|Error {
     Document document = check new(x509Record.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, x509Record.username, x509Record.password,
@@ -121,7 +131,7 @@ public function applyX509Token(*X509Record x509Record) returns string|Error {
     return generateEnvelope(usernameTokenWithX509);
 }
 
-public function applyUTSignature(*UTSignature utSignature) returns string|Error {
+public function applyUTSignature(*UTSignature utSignature) returns xml|Error {
     Document document = check new(utSignature.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
@@ -137,7 +147,7 @@ public function applyUTSignature(*UTSignature utSignature) returns string|Error 
     return check generateEnvelope(usernameToken, signature = signatureResult);
 }
 
-public function applyUTEncryption(*UTEncryption utEncryption) returns string|Error {
+public function applyUTEncryption(*UTEncryption utEncryption) returns xml|Error {
     Document document = check new(utEncryption.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Encryption encryption = check new();
@@ -154,7 +164,7 @@ public function applyUTEncryption(*UTEncryption utEncryption) returns string|Err
     return generateEnvelope(usernameToken, encryptionResult);
 }
 
-public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) returns string|Error {
+public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) returns xml|Error {
     Document document = check new(utSignAndEncrypt.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
@@ -177,8 +187,7 @@ public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) return
     return generateEnvelope(usernameToken, encryptionResult, signatureResult);
 }
 
-public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding)
-                                        returns string|Error {
+public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding) returns xml|Error {
     Document document = check new(utSymmetricBinding.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
@@ -201,7 +210,7 @@ public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding)
     return generateEnvelope(usernameToken, encryptionResult, signatureResult);
 }
 
-public function applyAsymmetricBinding(*UTAsymmetricBinding utAsymmetricBinding) returns string|Error {
+public function applyAsymmetricBinding(*UTAsymmetricBinding utAsymmetricBinding) returns xml|Error {
     Document document = check new(utAsymmetricBinding.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();

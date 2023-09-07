@@ -22,7 +22,7 @@ import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BHandle;
 import io.ballerina.runtime.api.values.BObject;
-import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.api.values.BXml;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -46,12 +46,12 @@ import static org.wssec.Utils.createError;
 public class DocumentBuilder {
     private final Document document;
 
-    public DocumentBuilder(BString xmlPayload) {
+    public DocumentBuilder(BXml xmlPayload) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         try {
             this.document = factory.newDocumentBuilder()
-                    .parse(new InputSource(new StringReader(xmlPayload.getValue())));
+                    .parse(new InputSource(new StringReader(xmlPayload.toString())));
         } catch (SAXException | IOException | ParserConfigurationException e) {
             throw createError(e.getMessage());
         }
