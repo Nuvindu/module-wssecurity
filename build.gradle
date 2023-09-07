@@ -60,11 +60,31 @@ allprojects {
 
 subprojects {
     configurations {
+        externalJars
         ballerinaStdLibs
+        jbalTools
     }
+
     dependencies {
+        /* JBallerina Tools */
+        jbalTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+            transitive = false
+        }
+
         /* Standard libraries */
         ballerinaStdLibs "io.ballerina.stdlib:time-ballerina:${stdlibTimeVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:crypto-ballerina:${stdlibCryptoVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:random-ballerina:${stdlibRandomVersion}"
+
+        externalJars (group: 'org.apache.wss4j', name: 'wss4j-ws-security-dom', version: "${wsSecurityDomVersion}") {
+            transitive = false
+        }
+        externalJars (group: 'org.apache.wss4j', name: 'wss4j-ws-security-common', version: "${wsSecurityDomVersion}") {
+            transitive = false
+        }
+        externalJars (group: 'org.apache.santuario', name: 'xmlsec', version: "${xmlSecVersion}") {
+            transitive = false
+        }
     }
 }
 
