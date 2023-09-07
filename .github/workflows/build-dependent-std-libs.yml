@@ -70,15 +70,6 @@ jobs:
               with:
                   repository: 'ballerina-platform/module-ballerina-${{ matrix.module }}'
 
-            - name: Change constraint module version
-              run: |
-                  if ${{ inputs.timestamped_version != ''}}; then
-                      CONSTRAINT_VERSION=${{ inputs.timestamped_version }}
-                  else
-                      CONSTRAINT_VERSION=${{ env.TIME_STAMPED_VERSION }}
-                  fi
-                  echo CONSTRAINTVERSION=$CONSTRAINT_VERSION
-                  sed -i "s/stdlibConstraintVersion=\(.*\)/stdlibConstraintVersion=$CONSTRAINT_VERSION/g" gradle.properties
             - name: Build with Gradle
               env:
                   packageUser: ${{ github.actor }}
@@ -138,15 +129,6 @@ jobs:
               with:
                   repository: 'ballerina-platform/module-ballerinax-${{ matrix.module }}'
 
-            - name: Change constraint module version
-              run: |
-                  if ${{ inputs.timestamped_version != ''}}; then
-                      CONSTRAINT_VERSION=${{ inputs.timestamped_version }}
-                  else
-                      CONSTRAINT_VERSION=${{ env.TIME_STAMPED_VERSION }}
-                  fi
-                  echo CONSTRAINTVERSION=$CONSTRAINT_VERSION
-                  sed -i "s/stdlibConstraintVersion=\(.*\)/stdlibConstraintVersion=$CONSTRAINT_VERSION/g" gradle.properties
             - name: Build with Gradle
               env:
                   packageUser: ${{ github.actor }}
