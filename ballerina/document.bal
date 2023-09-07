@@ -16,7 +16,7 @@
 
 import ballerina/jballerina.java;
 
-public class Document {
+class Document {
     private handle nativeDocumentBuilder;
 
     public function init(xml xmlPayload) returns Error? {

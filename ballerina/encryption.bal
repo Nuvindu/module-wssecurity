@@ -18,13 +18,13 @@ import ballerina/random;
 import ballerina/crypto;
 import ballerina/jballerina.java;
 
-public class Encryption {
+class Encryption {
 
     private handle nativeEncryption;
     private byte[16] key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    public function init(EncryptionAlgorithm encryptionAlgorithm = AES_128) returns Error? {
+    function init(EncryptionAlgorithm encryptionAlgorithm = AES_128) returns Error? {
         foreach int i in 0 ... 15 {
             self.key[i] = <byte>(check random:createIntInRange(0, 255));
         } on fail var e {
@@ -38,7 +38,7 @@ public class Encryption {
         self.nativeEncryption = newEncryption(encryptionAlgorithm);
     }
 
-    public function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm,
+    function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm,
                                 crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {

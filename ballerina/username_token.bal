@@ -16,7 +16,7 @@
 
 import ballerina/jballerina.java;
 
-public class UsernameToken {
+class UsernameToken {
     *Token;
     private handle nativeUT;
     private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
@@ -26,7 +26,7 @@ public class UsernameToken {
     private PasswordType passwordType;
     private AuthType authType = NONE;
 
-    public function init(WSSecurityHeader wsSecHeader, string username, string password, PasswordType passwordType) {
+    function init(WSSecurityHeader wsSecHeader, string username, string password, PasswordType passwordType) {
         self.'type = USERNAME_TOKEN;
         self.username = username;
         self.password = password;
@@ -66,7 +66,7 @@ public class UsernameToken {
     public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
         return self.encryptionAlgorithm;
     }
-    public function populateHeaderData(string username, string password, string pwType,
+    function populateHeaderData(string username, string password, string pwType,
                                        Encryption encData, Signature signValue, AuthType authType = NONE)
                                        returns string|Error = @java:Method {
         'class: "org.wssec.UsernameToken"

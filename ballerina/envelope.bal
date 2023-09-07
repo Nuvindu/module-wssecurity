@@ -17,7 +17,7 @@
 import ballerina/crypto;
 import ballerina/regex;
 
-public function addSecurityHeader(Document document) returns WSSecurityHeader|Error {
+function addSecurityHeader(Document document) returns WSSecurityHeader|Error {
     WSSecurityHeader wsSecHeader = check new (document);
     Error? insertHeader = wsSecHeader.insertSecHeader();
     if insertHeader is () {
@@ -26,12 +26,12 @@ public function addSecurityHeader(Document document) returns WSSecurityHeader|Er
     return insertHeader;
 }
 
-public function getEnvelopeBody(xml envelope) returns string|Error {
+function getEnvelopeBody(xml envelope) returns string|Error {
     Document document = check new (envelope);
     return document.getEnvelopeBody();
 }
 
-public function addTimestampToken(WSSecurityHeader wsSecHeader, int timeToLive) returns TimestampToken|Error {
+function addTimestampToken(WSSecurityHeader wsSecHeader, int timeToLive) returns TimestampToken|Error {
     if timeToLive <= 0 {
         return error Error("Invalid value for `timeToLive`");
     }
@@ -39,32 +39,32 @@ public function addTimestampToken(WSSecurityHeader wsSecHeader, int timeToLive) 
     return timestampToken;
 }
 
-public function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm,
+function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm,
                             crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
     Encryption encrypt = check new();                            
     return encrypt.decryptData(cipherText, encryptionAlgorithm, key);
 }
 
-public function addSignature(Signature sign, string signatureAlgorithm, byte[] signature) returns Signature|Error {
+function addSignature(Signature sign, string signatureAlgorithm, byte[] signature) returns Signature|Error {
     sign.setSignatureAlgorithm(signatureAlgorithm);
     sign.setSignatureValue(signature);
     return sign;
 }
 
-public function addEncryption(Encryption encrypt , string encryptionAlgorithm, byte[] encryption) returns Encryption|Error {
+function addEncryption(Encryption encrypt , string encryptionAlgorithm, byte[] encryption) returns Encryption|Error {
     encrypt.setEncryptionAlgorithm(encryptionAlgorithm);
     encrypt.setEncryptedData(encryption);
     return encrypt;
 }
 
-public function addUsernameToken(WSSecurityHeader wsSecHeader, string username, string password,
+function addUsernameToken(WSSecurityHeader wsSecHeader, string username, string password,
                                     PasswordType passwordType, AuthType authType = NONE) returns UsernameToken {
     UsernameToken usernameToken = new(wsSecHeader, username, password, passwordType);
     usernameToken.setAuthType(authType);
     return usernameToken;
 }
 
-public function addX509Token(string|X509Token x509certToken, UsernameToken ut) returns UsernameToken|Error {
+function addX509Token(string|X509Token x509certToken, UsernameToken ut) returns UsernameToken|Error {
     X509Token x509Token;
     if x509certToken is string {
         x509Token = check new (x509certToken);
@@ -85,7 +85,7 @@ public function getSignatureData(xml envelope) returns byte[]|Error {
     return document.getSignatureData();
 }
 
-public function generateEnvelope(Token token, Encryption encryption = check new, 
+function generateEnvelope(Token token, Encryption encryption = check new, 
                                     Signature signature = check new) returns xml|Error {
     if token is TimestampToken {
         string envelope = check token.addTimestamp();
