@@ -153,10 +153,10 @@ function testUsernameTokenWithCustomSignatureAndCustomEncryption() returns error
     test:assertEquals(securityHeader, ());
     string soapBody = check env.getEnvelopeBody();
 
-    Encryption enc = check new ();
-    byte[] encryptData = check enc.encryptData(soapBody, AES_128);
-    Error? encryption = env.addEncryption(AES_128, encryptData);
-    test:assertEquals(encryption, ());
+    // Encryption enc = check new ();
+    // byte[] encryptData = check enc.encryptData(soapBody, AES_128);
+    // Error? encryption = env.addEncryption(AES_128, encryptData);
+    // test:assertEquals(encryption, ());
 
     crypto:KeyStore keyStore = {
         path: KEY_STORE_PATH,
@@ -165,21 +165,22 @@ function testUsernameTokenWithCustomSignatureAndCustomEncryption() returns error
     crypto:PrivateKey privateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
     crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    Signature sign = check new ();
-    byte[] signData = check sign.signData(soapBody, RSA_SHA1, privateKey);
+    // Signature sign = check new ();
+    // byte[] signData = check sign.signData(soapBody, RSA_SHA1, privateKey);
 
-    Error? signature = env.addSignature(RSA_SHA1, signData);
-    test:assertEquals(signature, ());
+    // Error? signature = env.addSignature(RSA_SHA1, signData);
+    // test:assertEquals(signature, ());
 
-    env.addUsernameToken(USERNAME, PASSWORD, DIGEST, SIGN_AND_ENCRYPT);
-    string securedEnvelope = check env.generateEnvelope();
+    // env.addUsernameToken(USERNAME, PASSWORD, DIGEST, SIGN_AND_ENCRYPT);
+    string securedEnvelope = check env.applyUTSignAndEncrypt(USERNAME, PASSWORD, TEXT, privateKey,
+                                                       RSA_SHA1, publicKey, AES_128, ());
 
     byte[] signedData = <byte[]>env.getSignatureData();
     boolean validity = check crypto:verifyRsaSha1Signature(soapBody.toBytes(), signedData, publicKey);
     test:assertTrue(validity);
 
     byte[] encData = <byte[]>env.getEncryptedData();
-    byte[]|Error decryptData = enc.decryptData(encData, AES_128);
+    byte[]|Error decryptData = env.decryptData(encData, AES_128);
     test:assertEquals(soapBody, check string:fromBytes(check decryptData));
 
     assertSignatureWithoutX509(securedEnvelope);
@@ -378,18 +379,17 @@ function testUsernameTokenWithSymmetricBindingWithX509() returns error? {
     groups: ["username_token", "encryption", "aes_256_gcm"]
 }
 function testUsernameTokenWithEncryption() returns error? {
-    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
-
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body><yourPayload>This is the SOAP Body</yourPayload></soap:Body> </soap:Envelope>`;
+    
     Envelope env = check new (xmlPayload);
     Error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());
     string soapBody = check env.getEnvelopeBody();
 
     string securedEnvelope = check env.applyUTEncryption(USERNAME, PASSWORD, AES_128);
-
     byte[] encData = <byte[]>env.getEncryptedData();
     byte[]|Error decryptData = env.decryptData(encData, AES_128);
-    test:assertEquals(soapBody, check string:fromBytes(check decryptData));
+    test:assertEquals(check string:fromBytes(check decryptData), soapBody);
 
     assertEncryptedPart(securedEnvelope);
 }
@@ -398,7 +398,7 @@ function testUsernameTokenWithEncryption() returns error? {
     groups: ["username_token", "signature", "x509"]
 }
 function testUsernameTokenWithX509Signature() returns error? {
-    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body> <yourPayload>...</yourPayload> </soap:Body> </soap:Envelope>`;
+    string xmlPayload = string `<?xml version="1.0" encoding="UTF-8" standalone="no"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> <soap:Header></soap:Header> <soap:Body><yourPayload>This is the SOAP Body</yourPayload></soap:Body> </soap:Envelope>`;
     Envelope env = check new (xmlPayload);
     Error? securityHeader = env.addSecurityHeader();
     test:assertEquals(securityHeader, ());

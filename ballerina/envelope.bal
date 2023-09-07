@@ -156,9 +156,28 @@ public class Envelope {
     public function applyUTEncryption(string alias, string password, EncryptionAlgorithm encryptionAlgorithm,
                                       crypto:PublicKey|crypto:PrivateKey? key = (), X509Token? x509Token = ())
                                       returns string|Error {
-        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(), encryptionAlgorithm);
+        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(),
+                                                               encryptionAlgorithm, key);
         self.addEncryption(encryptionAlgorithm, encryptData);
         self.addUsernameToken(alias, password, DIGEST, ENCRYPT);
+        if x509Token !is () {
+            check self.addX509Token(x509Token);
+        }
+        return self.generateEnvelope();
+    }
+
+    public function applyUTSignAndEncrypt(string alias, string password, PasswordType passwordType, 
+                                          crypto:PrivateKey signatureKey, SignatureAlgorithm signatureAlgorithm,
+                                          crypto:PublicKey|crypto:PrivateKey? encryptKey,
+                                          EncryptionAlgorithm encryptionAlgorithm,
+                                          X509Token? x509Token = ())
+                                          returns string|Error {
+        byte[] signedData = check self.sign.signData(check self.getEnvelopeBody(), signatureAlgorithm, signatureKey);
+        self.addSignature(signatureAlgorithm, signedData);
+        byte[] encryptData = check self.encryption.encryptData(check self.getEnvelopeBody(),
+                                                               encryptionAlgorithm, encryptKey);
+        self.addEncryption(encryptionAlgorithm, encryptData);
+        self.addUsernameToken(alias, password, passwordType, SIGN_AND_ENCRYPT);
         if x509Token !is () {
             check self.addX509Token(x509Token);
         }
