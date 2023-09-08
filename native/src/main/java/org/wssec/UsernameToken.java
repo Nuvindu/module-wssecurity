@@ -53,6 +53,7 @@ import static org.wssec.Constants.NATIVE_UT;
 import static org.wssec.Constants.NONE;
 import static org.wssec.Constants.SIGNATURE;
 import static org.wssec.Constants.SIGN_AND_ENCRYPT;
+import static org.wssec.Utils.POLICY_NOT_SUPPORTED_ERROR;
 import static org.wssec.Utils.createError;
 
 public class UsernameToken {
@@ -135,7 +136,7 @@ public class UsernameToken {
     }
 
     protected void setX509Token(X509SecToken x509SecToken) {
-        this.x509SecToken =  x509SecToken;
+        this.x509SecToken = x509SecToken;
     }
 
     public X509SecToken getX509SecToken() {
@@ -178,7 +179,7 @@ public class UsernameToken {
                 case NONE -> {
                     setUTChildElements(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
                     switch (pwType.getValue()) {
-                        case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST ->  {
+                        case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST -> {
                             usernameToken.addDerivedKey(Constants.ITERATION);
                             xmlDocument = usernameToken.build(UsernameTokenUtil.generateSalt(true));
                         }
@@ -206,7 +207,7 @@ public class UsernameToken {
                     WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
                 }
                 default -> {
-                    return createError("Given ws security policy is currently not supported");
+                    return createError(POLICY_NOT_SUPPORTED_ERROR);
                 }
             }
             return convertDocumentToString(xmlDocument);
