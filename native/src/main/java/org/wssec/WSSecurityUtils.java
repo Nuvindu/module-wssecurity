@@ -96,22 +96,20 @@ public class WSSecurityUtils {
     }
 
     public static byte[] getSignatureValue(Document doc) {
-        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
-        String encryptedText = digestValueList.item(0).getFirstChild().getNodeValue();
-        return Base64.getDecoder().decode(encryptedText);
+        String signature = doc.getElementsByTagName(SIGNATURE_VALUE_TAG).item(0).getFirstChild().getNodeValue();
+        return Base64.getDecoder().decode(signature);
     }
 
     public static void setEncryptedData(Document doc, byte[] encryptedData) {
-
         Element cipherDataElement = (Element) doc
                 .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
         cipherDataElement.getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(encryptedData));
     }
 
-    public static byte[] getEncryptedData(Document doc) {
-        Element cipherDataElement = (Element) doc
-                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
-        String encryptedText = cipherDataElement.getFirstChild().getNodeValue();
+    public static byte[] getEncryptedData(Document document) {
+        String encryptedText = document
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0)
+                .getFirstChild().getNodeValue();
         return Base64.getDecoder().decode(encryptedText);
     }
 }
