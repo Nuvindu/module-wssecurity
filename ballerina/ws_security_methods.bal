@@ -76,7 +76,7 @@ function addX509Token(string|X509Token x509certToken, UsernameToken ut) returns 
 }
 
 function generateEnvelope(Token token, Encryption encryption = check new, 
-                                    Signature signature = check new) returns xml|Error {
+                          Signature signature = check new) returns xml|Error {
     if token is TimestampToken {
         string envelope = check token.addTimestamp();
         do {
@@ -87,7 +87,7 @@ function generateEnvelope(Token token, Encryption encryption = check new,
     }
     if token is UsernameToken {
         string envelope = check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(),
-                                              encryption, signature, token.getAuthType());
+                                                         encryption, signature, token.getAuthType());
         do {
             return check xml:fromString(regex:replace(envelope, string`<?.*?><`, "<"));
         } on fail var e {
@@ -134,7 +134,7 @@ public function applyUsernameToken(*UTRecord utRecord) returns xml|Error {
     Document document = check new(utRecord.envelope);
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utRecord.username,
-                                                    utRecord.password, utRecord.passwordType, NONE);
+                                                   utRecord.password, utRecord.passwordType, NONE);
     return generateEnvelope(usernameToken);
 }
 
@@ -160,7 +160,7 @@ public function applyUTSignature(*UTSignature utSignature) returns xml|Error {
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
     byte[] signedData = check signature.signData(check getEnvelopeBody(utSignature.envelope), 
-                                                    utSignature.signatureAlgorithm, utSignature.signatureKey);
+                                                 utSignature.signatureAlgorithm, utSignature.signatureKey);
     Signature signatureResult = check addSignature(signature, utSignature.signatureAlgorithm, signedData);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utSignature.username, utSignature.password,
                                                    utSignature.passwordType, SIGNATURE);
@@ -210,8 +210,8 @@ public function applyUTSignAndEncrypt(*UTSignAndEncrypt utSignAndEncrypt) return
                                                       utSignAndEncrypt.encryptionKey);
     Encryption encryptionResult = check addEncryption(encryption, utSignAndEncrypt.encryptionAlgorithm, encryptData);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utSignAndEncrypt.username,
-                                                    utSignAndEncrypt.password,
-                                                    utSignAndEncrypt.passwordType, SIGN_AND_ENCRYPT);
+                                                   utSignAndEncrypt.password,
+                                                   utSignAndEncrypt.passwordType, SIGN_AND_ENCRYPT);
     X509Token|string? x509Token = utSignAndEncrypt.x509Token;
     if x509Token !is () {
         usernameToken = check addX509Token(x509Token, usernameToken);
@@ -228,17 +228,17 @@ public function applySymmetricBinding(*UTSymmetricBinding utSymmetricBinding) re
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
     byte[] signedData = check signature.signData(check getEnvelopeBody(utSymmetricBinding.envelope), 
-                                                    utSymmetricBinding.signatureAlgorithm,
-                                                    utSymmetricBinding.symmetricKey);
+                                                 utSymmetricBinding.signatureAlgorithm,
+                                                 utSymmetricBinding.symmetricKey);
     Signature signatureResult = check addSignature(signature, utSymmetricBinding.signatureAlgorithm, signedData);
     Encryption encryption = check new();
     byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(utSymmetricBinding.envelope),
-                                                        utSymmetricBinding.encryptionAlgorithm,
-                                                        utSymmetricBinding.symmetricKey);
+                                                      utSymmetricBinding.encryptionAlgorithm,
+                                                      utSymmetricBinding.symmetricKey);
     Encryption encryptionResult = check addEncryption(encryption, utSymmetricBinding.encryptionAlgorithm, encryptData);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utSymmetricBinding.username,
-                                                    utSymmetricBinding.password,
-                                                    utSymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
+                                                   utSymmetricBinding.password,
+                                                   utSymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
     X509Token|string? x509Token = utSymmetricBinding.x509Token;
     if x509Token !is () {
         usernameToken = check addX509Token(x509Token, usernameToken);
@@ -255,17 +255,17 @@ public function applyAsymmetricBinding(*UTAsymmetricBinding utAsymmetricBinding)
     WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
     Signature signature = check new();
     byte[] signedData = check signature.signData(check getEnvelopeBody(utAsymmetricBinding.envelope), 
-                                                    utAsymmetricBinding.signatureAlgorithm,
-                                                    utAsymmetricBinding.senderPrivateKey);
+                                                 utAsymmetricBinding.signatureAlgorithm,
+                                                 utAsymmetricBinding.senderPrivateKey);
     Signature signatureResult = check addSignature(signature, utAsymmetricBinding.signatureAlgorithm, signedData);
     Encryption encryption = check new();
     byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(utAsymmetricBinding.envelope),
-                                                        utAsymmetricBinding.encryptionAlgorithm,
-                                                        utAsymmetricBinding.receiverPublicKey);
+                                                      utAsymmetricBinding.encryptionAlgorithm,
+                                                      utAsymmetricBinding.receiverPublicKey);
     Encryption encryptionResult = check addEncryption(encryption, utAsymmetricBinding.encryptionAlgorithm, encryptData);
     UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utAsymmetricBinding.username,
-                                                    utAsymmetricBinding.password,
-                                                    utAsymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
+                                                   utAsymmetricBinding.password,
+                                                   utAsymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
     X509Token|string? x509Token = utAsymmetricBinding.x509Token;
     if x509Token !is () {
         usernameToken = check addX509Token(x509Token, usernameToken);
