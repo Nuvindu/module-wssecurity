@@ -63,7 +63,7 @@ function testTimestampTokenWithIncorrectTimeError() returns error? {
             </soap:Body>
         </soap:Envelope>`;
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
-    TSRecord tsRecord = {
+    TimestampTokenConfig tsRecord = {
         envelope: envelope,
         timeToLive: -1
     };
