@@ -39,7 +39,7 @@ class Encryption {
     }
 
     function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm,
-                                crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
+                         crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
             match encryptionAlgorithm {
