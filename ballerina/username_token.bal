@@ -19,8 +19,6 @@ import ballerina/jballerina.java;
 class UsernameToken {
     *Token;
     private handle nativeUT;
-    private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
-    private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
     private string username;
     private string password;
     private PasswordType passwordType;
@@ -31,7 +29,7 @@ class UsernameToken {
         self.username = username;
         self.password = password;
         self.passwordType = passwordType;
-        self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
+        self.nativeUT = newToken(wsSecHeader);
         self.setPassword(password);
     }
 
@@ -41,10 +39,6 @@ class UsernameToken {
 
     public function getAuthType() returns AuthType {
         return self.authType;
-    }
-
-    public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
-        self.signatureAlgorithm = signatureAlgorithm;
     }
 
     public function getUsername() returns string {
@@ -57,14 +51,6 @@ class UsernameToken {
 
     public function getPasswordType() returns string {
         return self.passwordType;
-    }
-
-    public function setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-        self.encryptionAlgorithm = encryptionAlgorithm;
-    }
-
-    public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
-        return self.encryptionAlgorithm;
     }
     function populateHeaderData(string username, string password, string pwType,
                                 Encryption encData, Signature signValue, AuthType authType = NONE)
@@ -85,7 +71,7 @@ class UsernameToken {
     } external;
 }
 
-function newToken(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) 
+function newToken(WSSecurityHeader wsSecHeader) 
     returns handle = @java:Constructor {
     'class: "org.wssec.UsernameToken"
 } external;
