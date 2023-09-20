@@ -64,10 +64,8 @@ public class WSSecurityUtils {
         byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(), salt, ITERATION);
         if (useDerivedKey) {
             usernameToken.getUsernameToken().addDerivedKey(ITERATION);
-            sign.setSecretKey(key);
-        } else {
-            sign.setSecretKey(key);
         }
+        sign.setSecretKey(key);
         sign.setWsDocInfo(reqData.getWsDocInfo());
         sign.setSignatureAlgorithm(algorithm);
         if (usernameToken.getX509SecToken() != null) {
@@ -90,7 +88,9 @@ public class WSSecurityUtils {
         reqData.getSignatureValues().add(sign.getSignatureValue());
     }
 
-    public static void setSignatureValue(Document doc, byte[] signature) {
+    public static void setSignatureValue(Document doc, byte[] signature, String algorithm) {
+        doc.getElementsByTagName("ds:SignatureMethod")
+                .item(0).getAttributes().item(0).setNodeValue(algorithm);
         NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
         digestValueList.item(0).getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(signature));
     }

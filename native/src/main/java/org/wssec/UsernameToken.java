@@ -190,7 +190,8 @@ public class UsernameToken {
                     xmlDocument = createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue(),
+                                                      signature.getSignatureAlgorithm());
                 }
                 case ENCRYPT -> {
                     setUTChildElements(usernameToken, DIGEST, username.getValue(), password.getValue());
@@ -204,7 +205,8 @@ public class UsernameToken {
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
                     xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
                     WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue(),
+                                                      signature.getSignatureAlgorithm());
                 }
                 default -> {
                     return createError(POLICY_NOT_SUPPORTED_ERROR);
@@ -226,9 +228,8 @@ public class UsernameToken {
         reqData.setWsDocInfo(new WSDocInfo(usernameTokenObj.getDocument()));
         setUTChildElements(usernameToken, passwordType, username, password);
         usernameToken.prepare(salt);
-        WSSecurityUtils.buildSignature(reqData,
-                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
-                                                     usernameTokenObj.getSignAlgo(), useDerivedKey));
+        WSSecurityUtils.buildSignature(reqData, WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
+                                       usernameTokenObj.getSignAlgo(), useDerivedKey));
         return usernameToken.build(salt);
     }
 
