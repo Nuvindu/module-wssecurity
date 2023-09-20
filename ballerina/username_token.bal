@@ -67,8 +67,8 @@ class UsernameToken {
         return self.encryptionAlgorithm;
     }
     function populateHeaderData(string username, string password, string pwType,
-                                       Encryption encData, Signature signValue, AuthType authType = NONE)
-                                       returns string|Error = @java:Method {
+                                Encryption encData, Signature signValue, AuthType authType = NONE)
+                                returns string|Error = @java:Method {
         'class: "org.wssec.UsernameToken"
     } external;
 
