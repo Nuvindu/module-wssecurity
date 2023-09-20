@@ -26,6 +26,7 @@ import io.ballerina.runtime.api.values.BString;
 import static org.wssec.Constants.NATIVE_SIGNATURE;
 
 public class Signature {
+
     private String signatureAlgorithm;
     private byte[] signatureValue;
 

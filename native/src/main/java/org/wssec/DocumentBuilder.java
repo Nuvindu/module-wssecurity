@@ -44,6 +44,7 @@ import static org.wssec.Constants.SOAP_BODY_TAG;
 import static org.wssec.Utils.createError;
 
 public class DocumentBuilder {
+
     private final Document document;
 
     public DocumentBuilder(BXml xmlPayload) {

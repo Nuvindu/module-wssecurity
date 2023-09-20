@@ -20,6 +20,7 @@ import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
 
 public class ModuleUtils {
+
     private static Module module;
 
     private ModuleUtils() {}

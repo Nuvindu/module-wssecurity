@@ -36,6 +36,8 @@ import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
 
+import static org.apache.wss4j.common.WSS4JConstants.AES_128_GCM;
+import static org.apache.wss4j.common.WSS4JConstants.HMAC_SHA1;
 import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
 import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
 import static org.wssec.Constants.CIPHER_VALUE_TAG;
@@ -45,17 +47,17 @@ import static org.wssec.Constants.SIGNATURE_VALUE_TAG;
 
 public class WSSecurityUtils {
 
-    public static Document encryptEnvelope(WSSecUsernameToken usernameToken, String encAlgo,
+    public static Document encryptEnvelope(WSSecUsernameToken usernameToken,
                                            byte[] rawKey) throws WSSecurityException {
         Init.init();
         JCEMapper.registerDefaultAlgorithms();
         WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
-        encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
+        encryptionBuilder.setSymmetricEncAlgorithm(AES_128_GCM);
         return encryptionBuilder.build(rawKey);
     }
 
     public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                                  String algorithm, boolean useDerivedKey) throws WSSecurityException {
+                                                  boolean useDerivedKey) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
         sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
         sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
@@ -67,7 +69,7 @@ public class WSSecurityUtils {
         }
         sign.setSecretKey(key);
         sign.setWsDocInfo(reqData.getWsDocInfo());
-        sign.setSignatureAlgorithm(algorithm);
+        sign.setSignatureAlgorithm(HMAC_SHA1);
         if (usernameToken.getX509SecToken() != null) {
             sign.setKeyIdentifierType(X509_KEY_IDENTIFIER);
             sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());

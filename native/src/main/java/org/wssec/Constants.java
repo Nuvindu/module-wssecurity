@@ -17,6 +17,7 @@
 package org.wssec;
 
 public class Constants {
+
     public static final int ITERATION = 1000;
     public static final String NONE = "NONE";
     public static final String DIGEST = "DIGEST";

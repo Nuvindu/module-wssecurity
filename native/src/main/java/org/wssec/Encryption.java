@@ -26,6 +26,7 @@ import io.ballerina.runtime.api.values.BString;
 import static org.wssec.Constants.NATIVE_ENCRYPTION;
 
 public class Encryption {
+
     private String encryptionAlgorithm;
     private byte[] encryptedData;
 

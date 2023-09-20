@@ -28,6 +28,7 @@ import static org.wssec.Constants.NATIVE_SEC_HEADER;
 import static org.wssec.Utils.createError;
 
 public class WSSecurityHeader {
+
     private final WSSecHeader wsSecHeader;
     private final Document document;
 
