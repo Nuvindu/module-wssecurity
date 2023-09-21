@@ -49,6 +49,12 @@ class Signature {
                 RSA_SHA256 => {
                     return check crypto:signRsaSha256(data, privateKey);
                 }
+                RSA_SHA384 => {
+                    return check crypto:signRsaSha384(data, privateKey);
+                }
+                RSA_SHA512 => {
+                    return check crypto:signRsaSha512(data, privateKey);
+                }
                 _ => {
                     return error("Invalid signature!");
                 }

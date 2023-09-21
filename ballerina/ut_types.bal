@@ -44,6 +44,8 @@ public enum WSSPolicy {
 public enum SignatureAlgorithm {
     RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
     RSA_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+    RSA_SHA384 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384",
+    RSA_SHA512 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512",
     HMAC_SHA1 = "http://www.w3.org/2000/09/xmldsig#hmac-sha1",
     HMAC_SHA256 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha256",
     HMAC_SHA384 = "http://www.w3.org/2001/04/xmldsig-more#hmac-sha384",
