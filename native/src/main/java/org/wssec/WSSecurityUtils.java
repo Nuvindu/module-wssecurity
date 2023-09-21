@@ -102,10 +102,12 @@ public class WSSecurityUtils {
         return Base64.getDecoder().decode(signature);
     }
 
-    public static void setEncryptedData(Document doc, byte[] encryptedData) {
+    public static void setEncryptedData(Document doc, byte[] encryptedData, String algorithm) {
         Element cipherDataElement = (Element) doc
                 .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
         cipherDataElement.getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(encryptedData));
+        doc.getElementsByTagName(ENCRYPTION_METHOD_TAG).item(0).getAttributes().item(0)
+                .setNodeValue(algorithm);
     }
 
     public static byte[] getEncryptedData(Document document) {
