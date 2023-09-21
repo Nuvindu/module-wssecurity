@@ -529,6 +529,93 @@ function testUsernameTokenWithSignatureRsaSha256() returns error? {
 }
 
 @test:Config {
+    groups: ["username_token", "signature"]
+}
+function testUsernameTokenWithSignatureRsaSha384() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    UtSignatureConfig utSignature = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: TEXT,
+        signatureKey: signatureKey,
+        signatureAlgorithm: RSA_SHA384
+    };
+    xml securedEnvelope = check applyUtSignature(utSignature);
+    string envelopeString = securedEnvelope.toBalString();
+    byte[] signedData = check getSignatureData(securedEnvelope);
+
+    boolean validity = check crypto:verifyRsaSha384Signature(envelope.toBalString().toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithoutX509(envelopeString);
+}
+@test:Config {
+    groups: ["username_token", "signature"]
+}
+function testUsernameTokenWithSignatureRsaSha512() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    UtSignatureConfig utSignature = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: TEXT,
+        signatureKey: signatureKey,
+        signatureAlgorithm: RSA_SHA512
+    };
+    xml securedEnvelope = check applyUtSignature(utSignature);
+    string envelopeString = securedEnvelope.toBalString();
+    byte[] signedData = check getSignatureData(securedEnvelope);
+
+    boolean validity = check crypto:verifyRsaSha512Signature(envelope.toBalString().toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithoutX509(envelopeString);
+}
+
+@test:Config {
     groups: ["username_token", "signature", "x509"]
 }
 function testX509TokenWithSignature() returns error? {
