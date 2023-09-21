@@ -35,6 +35,8 @@ public class Constants {
     public static final String NATIVE_ENCRYPTION = "nativeEncryption";
     public static final String SOAP_BODY_TAG = "soap:Body";
     public static final String SIGNATURE_VALUE_TAG = "ds:SignatureValue";
+    public static final String SIGNATURE_METHOD_TAG = "ds:SignatureMethod";
+    public static final String ENCRYPTION_METHOD_TAG = "xenc:EncryptionMethod";
     public static final String NAMESPACE_URI_ENC = "http://www.w3.org/2001/04/xmlenc#";
     public static final String CIPHER_VALUE_TAG = "CipherValue";
     public static final String X509 = "X.509";

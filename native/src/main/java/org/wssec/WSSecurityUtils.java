@@ -41,8 +41,10 @@ import static org.apache.wss4j.common.WSS4JConstants.HMAC_SHA1;
 import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
 import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
 import static org.wssec.Constants.CIPHER_VALUE_TAG;
+import static org.wssec.Constants.ENCRYPTION_METHOD_TAG;
 import static org.wssec.Constants.ITERATION;
 import static org.wssec.Constants.NAMESPACE_URI_ENC;
+import static org.wssec.Constants.SIGNATURE_METHOD_TAG;
 import static org.wssec.Constants.SIGNATURE_VALUE_TAG;
 
 public class WSSecurityUtils {
@@ -59,11 +61,8 @@ public class WSSecurityUtils {
     public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
                                                   boolean useDerivedKey) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        byte[] salt = UsernameTokenUtil.generateSalt(true);
-        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(), salt, ITERATION);
+        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(),
+                                                          UsernameTokenUtil.generateSalt(true), ITERATION);
         if (useDerivedKey) {
             usernameToken.getUsernameToken().addDerivedKey(ITERATION);
         }
@@ -91,7 +90,7 @@ public class WSSecurityUtils {
     }
 
     public static void setSignatureValue(Document doc, byte[] signature, String algorithm) {
-        doc.getElementsByTagName("ds:SignatureMethod")
+        doc.getElementsByTagName(SIGNATURE_METHOD_TAG)
                 .item(0).getAttributes().item(0).setNodeValue(algorithm);
         NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
         digestValueList.item(0).getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(signature));
