@@ -18,10 +18,7 @@ public enum AuthType {
     NONE,
     SIGNATURE,
     ENCRYPT,
-    DECRYPT,
-    SIGN_AND_ENCRYPT,
-    ASYMMETRIC_SIGN_AND_ENCRYPT,
-    SYMMETRIC_SIGN_AND_ENCRYPT
+    SIGN_AND_ENCRYPT
 }
 
 public enum PasswordType {
@@ -37,8 +34,7 @@ public enum WSSPolicy {
     X509_TOKEN,
     SYMMETRIC_BINDING,
     ASYMMETRIC_BINDING,
-    TRANSPORT_BINDING,
-    UT_SIGNATURE
+    TRANSPORT_BINDING
 }
 
 public enum SignatureAlgorithm {
@@ -55,8 +51,11 @@ public enum SignatureAlgorithm {
 public enum EncryptionAlgorithm {
     RSA_ECB = "http://www.w3.org/2001/04/xmlenc#rsa-1_5",
     AES_128 = "http://www.w3.org/2001/04/xmlenc#aes128-cbc",
-    AES_256 = "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
     AES_192 = "http://www.w3.org/2001/04/xmlenc#aes192-cbc",
+    AES_256 = "http://www.w3.org/2001/04/xmlenc#aes256-cbc",
+    AES_128_ECB = "http://www.w3.org/2009/xmlenc11#aes128-ecb",
+    AES_192_ECB = "http://www.w3.org/2009/xmlenc11#aes192-ecb",
+    AES_256_ECB = "http://www.w3.org/2009/xmlenc11#aes256-ecb",
     AES_128_GCM = "http://www.w3.org/2009/xmlenc11#aes128-gcm",
     AES_192_GCM = "http://www.w3.org/2009/xmlenc11#aes192-gcm",
     AES_256_GCM = "http://www.w3.org/2009/xmlenc11#aes256-gcm"
