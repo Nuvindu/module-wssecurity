@@ -13,14 +13,13 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerina/crypto;
 
-# Represents the record for Username Token.
+# Represents the record for Username Token policy.
 #
 # + envelope - The SOAP envelope
-# + username - The name of the user  
-# + password - The password of the user  
+# + username - The name of the user
+# + password - The password of the user
 # + passwordType - The password type of the username token
 public type UsernameTokenConfig record {|
     xml envelope;
@@ -29,99 +28,46 @@ public type UsernameTokenConfig record {|
     PasswordType passwordType;
 |};
 
-# Represents the record for Timestamp Token.
+# Represents the record for Timestamp Token policy.
 #
-# + envelope - The SOAP envelope  
+# + envelope - The SOAP envelope
 # + timeToLive - The time to get expired
 public type TimestampTokenConfig record {|
     xml envelope;
     int timeToLive = 300;
 |};
 
-# Represents the record for Username Token with Signature.
+# Represents the record for Symmetric Binding policy.
 #
-# + signatureKey - The key to sign the SOAP envelope
-# + signatureAlgorithm - The algorithm to sign the SOAP envelope
-public type UtSignatureConfig record {|
-    *UsernameTokenConfig;
-    crypto:PrivateKey signatureKey;
-    SignatureAlgorithm signatureAlgorithm;
-|};
-
-# Represents the record for X509 Token with Signature.
-#
-# + signatureKey - The key to sign the SOAP envelope
-# + signatureAlgorithm - The algorithm to sign the SOAP envelope
-# + x509Token - The path or token of the X509 certificate
-public type X509SignatureConfig record {|
-    *UsernameTokenConfig;
-    crypto:PrivateKey signatureKey;
-    SignatureAlgorithm signatureAlgorithm;
-    X509Token|string x509Token;
-|};
-
-# Represents the record for Username Token with Encryption.
-#
-# + encryptionKey - The key to encrypt the SOAP body
-# + encryptionAlgorithm - The algorithm to encrypt the SOAP body
-public type UtEncryptionConfig record {|
-    *UsernameTokenConfig;
-    crypto:PublicKey|crypto:PrivateKey? encryptionKey = ();
-    EncryptionAlgorithm encryptionAlgorithm;
-|};
-
-# Represents the record for Username Token with Symmetric Binding.
-#
+# + envelope - The SOAP envelope
 # + symmetricKey - The key to sign and encrypt the SOAP envelope
 # + signatureAlgorithm - The algorithm to sign the SOAP envelope
-# + encryptionAlgorithm - The algorithm to encrypt the SOAP body
-public type UtSymmetricBindingConfig record {|
-    *UsernameTokenConfig;
-    crypto:PrivateKey symmetricKey;
-    SignatureAlgorithm signatureAlgorithm;
-    EncryptionAlgorithm encryptionAlgorithm;
-|};
-
-# Represents the record for Username Token with Symmetric Binding.
-# 
-# + senderPrivateKey - The private key of the client to sign the SOAP envelope
-# + receiverPublicKey - The public key of the server to encrypt the SOAP body
-# + signatureAlgorithm - The algorithm to sign the SOAP envelope
-# + encryptionAlgorithm - The algorithm to encrypt the SOAP body
-public type UtAsymmetricBindingConfig record {|
-    *UsernameTokenConfig;
-    crypto:PrivateKey senderPrivateKey;
-    crypto:PublicKey receiverPublicKey;
-    SignatureAlgorithm signatureAlgorithm;
-    EncryptionAlgorithm encryptionAlgorithm;
-|};
-
-# Represents the record for X509 Token with Symmetric Binding.
-#
-# + symmetricKey - The key to sign and encrypt the SOAP envelope
-# + signatureAlgorithm - The algorithm to sign the SOAP envelope
-# + encryptionAlgorithm - The algorithm to encrypt the SOAP body
+# + encryptionAlgorithm - The algorithm to encrypt the SOAP envelope
 # + x509Token - The path or token of the X509 certificate
-public type X509SymmetricBindingConfig record {|
-    *UsernameTokenConfig;
+public type SymmetricBindingConfig record {|
+    xml envelope;
     crypto:PrivateKey symmetricKey;
-    SignatureAlgorithm signatureAlgorithm;
-    EncryptionAlgorithm encryptionAlgorithm;
-    X509Token|string x509Token;
+    SignatureAlgorithm signatureAlgorithm?;
+    EncryptionAlgorithm encryptionAlgorithm?;
+    string x509Token?;
 |};
 
-# Represents the record for X509 Token with Asymmetric Binding.
+# Represents the record for Username Token with Asymmetric Binding policy.
 #
+# + envelope - The SOAP envelope
 # + senderPrivateKey - The private key of the client to sign the SOAP envelope
 # + receiverPublicKey - The public key of the server to encrypt the SOAP body
 # + signatureAlgorithm - The algorithm to sign the SOAP envelope
 # + encryptionAlgorithm - The algorithm to encrypt the SOAP body
 # + x509Token - The path or token of the X509 certificate
-public type X509AsymmetricBindingConfig record {|
-    *UsernameTokenConfig;
+public type AsymmetricBindingConfig record {|
+    xml envelope;
     crypto:PrivateKey senderPrivateKey;
     crypto:PublicKey receiverPublicKey;
-    SignatureAlgorithm signatureAlgorithm;
-    EncryptionAlgorithm encryptionAlgorithm;
-    X509Token|string x509Token;
+    SignatureAlgorithm signatureAlgorithm?;
+    EncryptionAlgorithm encryptionAlgorithm?;
+    string x509Token?;
 |};
+
+# Union type of all the web service security configurations.
+public type WsSecurityConfig UsernameTokenConfig|TimestampTokenConfig|SymmetricBindingConfig|AsymmetricBindingConfig;
