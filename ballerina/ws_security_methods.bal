@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerina/crypto;
 import ballerina/regex;
 
@@ -40,8 +39,8 @@ function addTimestampToken(WSSecurityHeader wsSecHeader, int timeToLive) returns
 }
 
 function decryptData(byte[] cipherText, EncryptionAlgorithm encryptionAlgorithm,
-                            crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
-    Encryption encrypt = check new();                            
+        crypto:PrivateKey|crypto:PublicKey? key = ()) returns byte[]|Error {
+    Encryption encrypt = check new ();
     return encrypt.decryptData(cipherText, encryptionAlgorithm, key);
 }
 
@@ -51,15 +50,15 @@ function addSignature(Signature sign, string signatureAlgorithm, byte[] signatur
     return sign;
 }
 
-function addEncryption(Encryption encrypt , string encryptionAlgorithm, byte[] encryption) returns Encryption|Error {
+function addEncryption(Encryption encrypt, string encryptionAlgorithm, byte[] encryption) returns Encryption|Error {
     encrypt.setEncryptionAlgorithm(encryptionAlgorithm);
     encrypt.setEncryptedData(encryption);
     return encrypt;
 }
 
 function addUsernameToken(WSSecurityHeader wsSecHeader, string username, string password,
-                                    PasswordType passwordType, AuthType authType = NONE) returns UsernameToken {
-    UsernameToken usernameToken = new(wsSecHeader, username, password, passwordType);
+        PasswordType passwordType, AuthType authType = NONE) returns UsernameToken {
+    UsernameToken usernameToken = new (wsSecHeader, username, password, passwordType);
     usernameToken.setAuthType(authType);
     return usernameToken;
 }
@@ -75,23 +74,23 @@ function addX509Token(string|X509Token x509certToken, UsernameToken ut) returns 
     return ut;
 }
 
-function generateEnvelope(Token token, Encryption encryption = check new, 
-                          Signature signature = check new) returns xml|Error {
+function generateEnvelope(Token token, Encryption encryption = check new,
+        Signature signature = check new) returns xml|Error {
     if token is TimestampToken {
         string envelope = check token.addTimestamp();
         do {
-            return check xml:fromString(regex:replace(envelope, string`<?.*?><`, "<"));
+            return check xml:fromString(regex:replace(envelope, string `<?.*?><`, "<"));
         } on fail var e {
-        	return error Error(e.message());
+            return error Error(e.message());
         }
     }
     if token is UsernameToken {
         string envelope = check token.populateHeaderData(token.getUsername(), token.getPassword(), token.getPasswordType(),
                                                          encryption, signature, token.getAuthType());
         do {
-            return check xml:fromString(regex:replace(envelope, string`<?.*?><`, "<"));
+            return check xml:fromString(regex:replace(envelope, string `<?.*?><`, "<"));
         } on fail var e {
-        	return error Error(e.message());
+            return error Error(e.message());
         }
     }
     return error("WS Security policy headers are not set.");
@@ -116,174 +115,125 @@ public function getSignatureData(xml envelope) returns byte[]|Error {
 }
 
 # Apply timestamp token security policy to the SOAP envelope.
-# 
-# + tsRecord - The `TSRecord` record with the required parameters
+#
+# + timestampToken - The `TSRecord` record with the required parameters
 # + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyTimestampToken(*TimestampTokenConfig tsRecord) returns xml|Error {
-    Document document = check new(tsRecord.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    TimestampToken timestampToken = check addTimestampToken(wSSecurityHeader, tsRecord.timeToLive);
-    return check generateEnvelope(timestampToken);
+public function applyTimestampToken(*TimestampTokenConfig timestampToken) returns xml|Error {
+    if timestampToken.timeToLive <= 0 {
+        return error Error("Invalid value for `timeToLive`");
+    }
+    Document document = check new (timestampToken.envelope);
+    WSSecurityHeader wsSecurityHeader = check addSecurityHeader(document);
+    WsSecurity wsSecurity = new;
+    string envelope = check wsSecurity.applyTimestampPolicy(wsSecurityHeader, timestampToken.timeToLive);
+    do {
+        return check xml:fromString(regex:replace(envelope, string `<?.*?><`, "<"));
+    } on fail var e {
+        return error Error(e.message());
+    }
 }
 
 # Apply username token security policy to the SOAP envelope.
-# 
-# + utRecord - The `UsernameTokenConfig` record with the required parameters
+#
+# + usernameToken - The `UsernameTokenConfig` record with the required parameters
 # + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyUsernameToken(*UsernameTokenConfig utRecord) returns xml|Error {
-    Document document = check new(utRecord.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utRecord.username,
-                                                   utRecord.password, utRecord.passwordType, NONE);
-    return generateEnvelope(usernameToken);
-}
-
-# Apply username token security policy with signature to the SOAP envelope.
-# 
-# + utSignature - The `UtSignatureConfig` record with the required parameters
-# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyUtSignature(*UtSignatureConfig utSignature) returns xml|Error {
-    Document document = check new(utSignature.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(utSignature.envelope.toBalString(), 
-                                                 utSignature.signatureAlgorithm, utSignature.signatureKey);
-    Signature signatureResult = check addSignature(signature, utSignature.signatureAlgorithm, signedData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utSignature.username, utSignature.password,
-                                                   utSignature.passwordType, SIGNATURE);
-    return check generateEnvelope(usernameToken, signature = signatureResult);
-}
-
-# Apply X509 token security policy with signature to the SOAP envelope.
-# 
-# + x509Signature - The `X509SignatureConfig` record with the required parameters
-# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyX509Signature(*X509SignatureConfig x509Signature) returns xml|Error {
-    Document document = check new(x509Signature.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(check getEnvelopeBody(x509Signature.envelope), 
-                                                 x509Signature.signatureAlgorithm, x509Signature.signatureKey);
-    Signature signatureResult = check addSignature(signature, x509Signature.signatureAlgorithm, signedData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, x509Signature.username, x509Signature.password,
-                                                   x509Signature.passwordType, SIGNATURE);
-    X509Token|string? x509Token = x509Signature.x509Token;
-    if x509Token !is () {
-        usernameToken = check addX509Token(x509Token, usernameToken);
+public function applyUsernameToken(*UsernameTokenConfig usernameToken) returns xml|Error {
+    Document document = check new (usernameToken.envelope);
+    WSSecurityHeader wsSecurityHeader = check addSecurityHeader(document);
+    WsSecurity wsSecurity = new;
+    string envelope = check wsSecurity.applyUtPolicy(wsSecurityHeader, usernameToken.username,
+                                                     usernameToken.password, usernameToken.passwordType);
+    do {
+        return check xml:fromString(regex:replace(envelope, string `<?.*?><`, "<"));
+    } on fail var e {
+        return error Error(e.message());
     }
-    return check generateEnvelope(usernameToken, signature = signatureResult);
-}
-
-# Apply username token security policy with encryption to the SOAP envelope.
-# 
-# + utEncryption - The `UtEncryptionConfig` record with the required parameters
-# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyUtEncryption(*UtEncryptionConfig utEncryption) returns xml|Error {
-    Document document = check new(utEncryption.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Encryption encryption = check new();
-    byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(utEncryption.envelope),
-                                                      utEncryption.encryptionAlgorithm,
-                                                      utEncryption.encryptionKey);
-    Encryption encryptionResult = check addEncryption(encryption, utEncryption.encryptionAlgorithm, encryptData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utEncryption.username, utEncryption.password,
-                                                   utEncryption.passwordType, ENCRYPT);
-    return generateEnvelope(usernameToken, encryptionResult);
 }
 
 # Apply symmetric binding security policy with username token to the SOAP envelope.
-# 
-# + utSymmetricBinding - The `UtSymmetricBindingConfig` record with the required parameters
+#
+# + symmetricBinding - The `UtSymmetricBindingConfig` record with the required parameters
 # + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyUtSymmetricBinding(*UtSymmetricBindingConfig utSymmetricBinding) returns xml|Error {
-    Document document = check new(utSymmetricBinding.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(check getEnvelopeBody(utSymmetricBinding.envelope), 
-                                                 utSymmetricBinding.signatureAlgorithm,
-                                                 utSymmetricBinding.symmetricKey);
-    Signature signatureResult = check addSignature(signature, utSymmetricBinding.signatureAlgorithm, signedData);
-    Encryption encryption = check new();
-    byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(utSymmetricBinding.envelope),
-                                                      utSymmetricBinding.encryptionAlgorithm,
-                                                      utSymmetricBinding.symmetricKey);
-    Encryption encryptionResult = check addEncryption(encryption, utSymmetricBinding.encryptionAlgorithm, encryptData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utSymmetricBinding.username,
-                                                   utSymmetricBinding.password,
-                                                   utSymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
-    return generateEnvelope(usernameToken, encryptionResult, signatureResult);
-}
-
-# Apply symmetric binding security policy with X509 token to the SOAP envelope.
-# 
-# + x509SymmetricBinding - The `X509SymmetricBindingConfig` record with the required parameters
-# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyX509SymmetricBinding(*X509SymmetricBindingConfig x509SymmetricBinding) returns xml|Error {
-    Document document = check new(x509SymmetricBinding.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(check getEnvelopeBody(x509SymmetricBinding.envelope), 
-                                                 x509SymmetricBinding.signatureAlgorithm,
-                                                 x509SymmetricBinding.symmetricKey);
-    Signature signatureResult = check addSignature(signature, x509SymmetricBinding.signatureAlgorithm, signedData);
-    Encryption encryption = check new();
-    byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(x509SymmetricBinding.envelope),
-                                                      x509SymmetricBinding.encryptionAlgorithm,
-                                                      x509SymmetricBinding.symmetricKey);
-    Encryption encryptionResult = check addEncryption(encryption, x509SymmetricBinding.encryptionAlgorithm,
-                                                      encryptData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, x509SymmetricBinding.username,
-                                                   x509SymmetricBinding.password,
-                                                   x509SymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
-    usernameToken = check addX509Token(x509SymmetricBinding.x509Token, usernameToken);
-    return generateEnvelope(usernameToken, encryptionResult, signatureResult);
-}
-
-# Apply asymmetric binding security policy with Username token to the SOAP envelope.
-# 
-# + utAsymmetricBinding - The `UtAsymmetricBindingConfig` record with the required parameters
-# + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyUtAsymmetricBinding(*UtAsymmetricBindingConfig utAsymmetricBinding) returns xml|Error {
-    Document document = check new(utAsymmetricBinding.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(check getEnvelopeBody(utAsymmetricBinding.envelope), 
-                                                 utAsymmetricBinding.signatureAlgorithm,
-                                                 utAsymmetricBinding.senderPrivateKey);
-    Signature signatureResult = check addSignature(signature, utAsymmetricBinding.signatureAlgorithm, signedData);
-    Encryption encryption = check new();
-    byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(utAsymmetricBinding.envelope),
-                                                      utAsymmetricBinding.encryptionAlgorithm,
-                                                      utAsymmetricBinding.receiverPublicKey);
-    Encryption encryptionResult = check addEncryption(encryption, utAsymmetricBinding.encryptionAlgorithm,
-                                                      encryptData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, utAsymmetricBinding.username,
-                                                   utAsymmetricBinding.password,
-                                                   utAsymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
-    return generateEnvelope(usernameToken, encryptionResult, signatureResult);
+public function applySymmetricBinding(*SymmetricBindingConfig symmetricBinding) returns xml|Error {
+    xml envelope = symmetricBinding.envelope;
+    Document document = check new (symmetricBinding.envelope);
+    WSSecurityHeader wsSecurityHeader = check addSecurityHeader(document);
+    if symmetricBinding.signatureAlgorithm !is () {
+        Signature signature = check new ();
+        byte[] signedData = check signature.signData(check getEnvelopeBody(envelope),
+                                                     <SignatureAlgorithm>symmetricBinding.signatureAlgorithm,
+                                                     symmetricBinding.symmetricKey);
+        Signature signatureResult = check addSignature(signature,
+                                                       <SignatureAlgorithm>symmetricBinding.signatureAlgorithm,
+                                                       signedData);
+        WsSecurity wsSecurity = new;
+        string securedEnvelope = check wsSecurity.applySignatureOnlyPolicy(wsSecurityHeader, signatureResult,
+                                                                           symmetricBinding.x509Token);
+        do {
+            envelope = check xml:fromString(regex:replace(securedEnvelope, string `<?.*?><`, "<"));
+        } on fail var e {
+            return error Error(e.message());
+        }
+    }
+    if symmetricBinding.encryptionAlgorithm !is () {
+        Encryption encryption = check new ();
+        byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(envelope),
+                                                          <EncryptionAlgorithm>symmetricBinding.encryptionAlgorithm,
+                                                          symmetricBinding.symmetricKey);
+        Encryption encryptionResult = check addEncryption(encryption,
+                                                          <EncryptionAlgorithm>symmetricBinding.encryptionAlgorithm,
+                                                          encryptData);
+        WsSecurity wsSecurity = new;
+        string securedEnvelope = check wsSecurity.applyEncryptionOnlyPolicy(wsSecurityHeader, encryptionResult);
+        do {
+            envelope = check xml:fromString(regex:replace(securedEnvelope, string `<?.*?><`, "<"));
+        } on fail var e {
+            return error Error(e.message());
+        }
+    }
+    return envelope;
 }
 
 # Apply asymmetric binding security policy with X509 token to the SOAP envelope.
-# 
-# + x509AsymmetricBinding - The `X509AsymmetricBindingConfig` record with the required parameters
+#
+# + asymmetricBinding - The `X509AsymmetricBindingConfig` record with the required parameters
 # + return - A `xml` type of SOAP envelope if the security binding is successfully added or else `wssec:Error`
-public function applyX509AsymmetricBinding(*X509AsymmetricBindingConfig x509AsymmetricBinding) returns xml|Error {
-    Document document = check new(x509AsymmetricBinding.envelope);
-    WSSecurityHeader wSSecurityHeader = check addSecurityHeader(document);
-    Signature signature = check new();
-    byte[] signedData = check signature.signData(check getEnvelopeBody(x509AsymmetricBinding.envelope), 
-                                                 x509AsymmetricBinding.signatureAlgorithm,
-                                                 x509AsymmetricBinding.senderPrivateKey);
-    Signature signatureResult = check addSignature(signature, x509AsymmetricBinding.signatureAlgorithm, signedData);
-    Encryption encryption = check new();
-    byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(x509AsymmetricBinding.envelope),
-                                                      x509AsymmetricBinding.encryptionAlgorithm,
-                                                      x509AsymmetricBinding.receiverPublicKey);
-    Encryption encryptionResult = check addEncryption(encryption, x509AsymmetricBinding.encryptionAlgorithm,
-                                                      encryptData);
-    UsernameToken usernameToken = addUsernameToken(wSSecurityHeader, x509AsymmetricBinding.username,
-                                                   x509AsymmetricBinding.password,
-                                                   x509AsymmetricBinding.passwordType, SIGN_AND_ENCRYPT);
-    usernameToken = check addX509Token(x509AsymmetricBinding.x509Token, usernameToken);
-    return generateEnvelope(usernameToken, encryptionResult, signatureResult);
+public function applyAsymmetricBinding(*AsymmetricBindingConfig asymmetricBinding) returns xml|Error {
+    xml envelope = asymmetricBinding.envelope;
+    Document document = check new (asymmetricBinding.envelope);
+    WSSecurityHeader wsSecurityHeader = check addSecurityHeader(document);
+    if asymmetricBinding.signatureAlgorithm !is () {
+        Signature signature = check new ();
+        byte[] signedData = check signature.signData(check getEnvelopeBody(asymmetricBinding.envelope),
+                                                     <SignatureAlgorithm>asymmetricBinding.signatureAlgorithm,
+                                                     asymmetricBinding.senderPrivateKey);
+        Signature signatureResult = check addSignature(signature,
+                                                       <SignatureAlgorithm>asymmetricBinding.signatureAlgorithm,
+                                                       signedData);
+        WsSecurity wsSecurity = new;
+        string securedEnvelope = check wsSecurity.applySignatureOnlyPolicy(wsSecurityHeader, signatureResult,
+                                                                           asymmetricBinding.x509Token);
+        do {
+            envelope = check xml:fromString(regex:replace(securedEnvelope, string `<?.*?><`, "<"));
+        } on fail var e {
+            return error Error(e.message());
+        }
+    }
+    if asymmetricBinding.encryptionAlgorithm !is () {
+        Encryption encryption = check new ();
+        byte[] encryptData = check encryption.encryptData(check getEnvelopeBody(asymmetricBinding.envelope),
+                                                          <EncryptionAlgorithm>asymmetricBinding.encryptionAlgorithm,
+                                                          asymmetricBinding.receiverPublicKey);
+        Encryption encryptionResult = check addEncryption(encryption,
+                                                          <EncryptionAlgorithm>asymmetricBinding.encryptionAlgorithm,
+                                                          encryptData);
+        WsSecurity wsSecurity = new;
+        string securedEnvelope = check wsSecurity.applyEncryptionOnlyPolicy(wsSecurityHeader, encryptionResult);
+        do {
+            envelope = check xml:fromString(regex:replace(securedEnvelope, string `<?.*?><`, "<"));
+        } on fail var e {
+            return error Error(e.message());
+        }
+    }
+    return envelope;
 }

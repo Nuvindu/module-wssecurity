@@ -59,7 +59,9 @@ import static org.wssec.Utils.createError;
 public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
+    private String username;
     private String password;
+    private String passwordType;
     private final Document document;
     private X509SecToken x509SecToken = null;
 
@@ -82,6 +84,22 @@ public class UsernameToken {
 
     protected String getPassword() {
         return password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPasswordType() {
+        return passwordType;
+    }
+
+    public void setPasswordType(String passwordType) {
+        this.passwordType = passwordType;
     }
 
     protected void setPassword(String password) {
@@ -154,14 +172,16 @@ public class UsernameToken {
                     setUTChildElements(usernameToken, DIGEST, username.getValue(), password.getValue());
                     usernameToken.build();
                     xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData(),
+                                                     encryption.getEncryptionAlgorithm());
                 }
                 case SIGN_AND_ENCRYPT -> {
                     createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
                     xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData(),
+                                                     encryption.getEncryptionAlgorithm());
                     WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue(),
                                                       signature.getSignatureAlgorithm());
                 }

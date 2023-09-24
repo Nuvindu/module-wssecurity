@@ -63,9 +63,6 @@ public class WSSecurityUtils {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
         byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(),
                                                           UsernameTokenUtil.generateSalt(true), ITERATION);
-        if (useDerivedKey) {
-            usernameToken.getUsernameToken().addDerivedKey(ITERATION);
-        }
         sign.setSecretKey(key);
         sign.setWsDocInfo(reqData.getWsDocInfo());
         sign.setSignatureAlgorithm(HMAC_SHA1);

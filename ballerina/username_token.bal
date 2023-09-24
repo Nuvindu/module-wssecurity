@@ -52,9 +52,10 @@ class UsernameToken {
     public function getPasswordType() returns string {
         return self.passwordType;
     }
+    
     function populateHeaderData(string username, string password, string pwType,
                                 Encryption encData, Signature signValue, AuthType authType = NONE)
-                                returns string|Error = @java:Method {
+        returns string|Error = @java:Method {
         'class: "org.wssec.UsernameToken"
     } external;
 
