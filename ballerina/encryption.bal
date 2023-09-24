@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/random;
 import ballerina/crypto;
 import ballerina/jballerina.java;
 
@@ -25,32 +24,44 @@ class Encryption {
     private byte[16] initialVector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     function init(EncryptionAlgorithm encryptionAlgorithm = AES_128) returns Error? {
-        foreach int i in 0 ... 15 {
-            self.key[i] = <byte>(check random:createIntInRange(0, 255));
-        } on fail var e {
-            return error(e.message());
-        }
-        foreach int i in 0 ... 15 {
-            self.initialVector[i] = <byte>(check random:createIntInRange(0, 255));
-        } on fail var e {
-            return error(e.message());
-        }
         self.nativeEncryption = newEncryption(encryptionAlgorithm);
     }
 
     function encryptData(string dataString, EncryptionAlgorithm encryptionAlgorithm,
-                         crypto:PublicKey|crypto:PrivateKey? key = ()) returns byte[]|Error {
+                         byte[]|crypto:PublicKey|crypto:PrivateKey key, byte[]? initialVector = ())
+        returns byte[]|Error {
         byte[] data = dataString.toBytes();
         do {
             match encryptionAlgorithm {
-                AES_128 => {
-                    return check crypto:encryptAesCbc(data, self.key, self.initialVector);
+                AES_128|AES_192|AES_256 => {
+                    if key is byte[] && initialVector is byte[] {
+                        return check crypto:encryptAesCbc(data, key, initialVector);
+                    } else if key !is byte[] {
+                        return error("Invalid key!");
+                    } else {
+                        return error("Initialization vector is empty!");
+                    }
                 }
-                AES_128_GCM => {
-                    return check crypto:encryptAesGcm(data, self.key, self.initialVector);
+                AES_128_ECB|AES_192_ECB|AES_256_ECB => {
+                    if key is byte[] && initialVector is byte[] {
+                        return check crypto:encryptAesEcb(data, key);
+                    } else if key !is byte[] {
+                        return error("Invalid key!");
+                    } else {
+                        return error("Initialization vector is empty!");
+                    }
+                }
+                AES_128_GCM|AES_192_GCM|AES_256_GCM => {
+                    if key is byte[] && initialVector is byte[] {
+                        return check crypto:encryptAesGcm(data, key, initialVector, crypto:NONE);
+                    } else if key !is byte[] {
+                        return error("Invalid key!");
+                    } else {
+                        return error("Initialization vector is empty!");
+                    }
                 }
                 RSA_ECB => {
-                    if key is () {
+                    if key !is crypto:PublicKey|crypto:PrivateKey {
                         return error("Missing key!");
                     }
                     return check crypto:encryptRsaEcb(data, key);
@@ -59,7 +70,6 @@ class Encryption {
                     return error("Encryption Algorithm is not supported");
                 }
             }
-
         } on fail var e {
             return error(e.message());
         }
