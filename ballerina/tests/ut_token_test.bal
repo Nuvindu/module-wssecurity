@@ -44,13 +44,7 @@ function testUsernameTokenWithPlaintextPassword() returns error? {
     };
     xml securedEnvelope = check applyUsernameToken(utRecord);
     string envelopeString = securedEnvelope.toBalString();
-    string:RegExp usernameTokenTag = re `<wsse:UsernameToken wsu:Id=".*">.*</wsse:UsernameToken>`;
-    string:RegExp usernameTag = re `<wsse:Username>${USERNAME}</wsse:Username>`;
-    string:RegExp passwordTag = re `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${PASSWORD}</wsse:Password>`;
-
-    test:assertTrue(envelopeString.includesMatch(usernameTokenTag));
-    test:assertTrue(envelopeString.includesMatch(usernameTag));
-    test:assertTrue(envelopeString.includesMatch(passwordTag));
+    assertUsernameToken(envelopeString, TEXT);
 }
 
 @test:Config {
@@ -80,15 +74,7 @@ function testUsernameTokenWithPlaintextPasswordWithDerivedKey() returns error? {
     xml securedEnvelope = check applyUsernameToken(utRecord);
     string envelopeString = securedEnvelope.toBalString();
 
-    string:RegExp usernameTokenTag = re `<wsse:UsernameToken .*>.*</wsse:UsernameToken>`;
-    string:RegExp usernameTag = re `<wsse:Username>${USERNAME}</wsse:Username>`;
-    string:RegExp salt = re `<wsse11:Salt>.*</wsse11:Salt>`;
-    string:RegExp iteration = re `<wsse11:Iteration>.*</wsse11:Iteration>`;
-
-    test:assertTrue(envelopeString.includesMatch(usernameTokenTag));
-    test:assertTrue(envelopeString.includesMatch(usernameTag));
-    test:assertTrue(envelopeString.includesMatch(salt));
-    test:assertTrue(envelopeString.includesMatch(iteration));
+    assertUsernameToken(envelopeString, DERIVED_KEY_TEXT);
 }
 
 @test:Config {
@@ -118,15 +104,7 @@ function testUsernameTokenWithHashedPasword() returns error? {
     xml securedEnvelope = check applyUsernameToken(utRecord);
     string envelopeString = securedEnvelope.toBalString();
 
-    string:RegExp usernameTag = re `<wsse:UsernameToken wsu:Id=".*"><wsse:Username>${USERNAME}</wsse:Username>`;
-    string:RegExp passwordTag = re `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">.*</wsse:Password>`;
-    string:RegExp nonce = re `<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">.*</wsse:Nonce>`;
-    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-
-    test:assertTrue(envelopeString.includesMatch(usernameTag));
-    test:assertTrue(envelopeString.includesMatch(passwordTag));
-    test:assertTrue(envelopeString.includesMatch(nonce));
-    test:assertTrue(envelopeString.includesMatch(created));
+    assertUsernameToken(envelopeString, DIGEST);
 }
 
 @test:Config {
@@ -156,23 +134,13 @@ function testUsernameTokenWithHashedPaswordWithDerivedKey() returns error? {
     xml securedEnvelope = check applyUsernameToken(utRecord);
     string envelopeString = securedEnvelope.toBalString();
 
-    string:RegExp usernameTag = re `<wsse:UsernameToken\s+.*><wsse:Username>${USERNAME}</wsse:Username>`;
-    string:RegExp nonce = re `<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">.*</wsse:Nonce>`;
-    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-    string:RegExp salt = re `<wsse11:Salt>.*</wsse11:Salt>`;
-    string:RegExp iteration = re `<wsse11:Iteration>.*</wsse11:Iteration>`;
-    
-    test:assertTrue(envelopeString.includesMatch(usernameTag));
-    test:assertTrue(envelopeString.includesMatch(nonce));
-    test:assertTrue(envelopeString.includesMatch(created));
-    test:assertTrue(envelopeString.includesMatch(salt));
-    test:assertTrue(envelopeString.includesMatch(iteration));
+    assertUsernameToken(envelopeString, DERIVED_KEY_DIGEST);
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+    groups: ["username_token", "signature", "symmetric_binding", "qw"]
 }
-function testUsernameTokenWithAsymmetricBinding() returns error? {
+function testSymmetricBindingPolicyWithSignatureOnly() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -189,40 +157,161 @@ function testUsernameTokenWithAsymmetricBinding() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
 
-    // generating keys
-    crypto:KeyStore serverKeyStore = {
-        path: X509_KEY_STORE_PATH,
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
         password: KEY_PASSWORD
     };
-    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    crypto:KeyStore clientKeyStore = {
-        path: X509_KEY_STORE_PATH_2,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
-
-    UtAsymmetricBindingConfig utAsymmBinding = {
+    SymmetricBindingConfig utSymmetricBinding = {
         envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
         signatureAlgorithm: RSA_SHA256,
-        encryptionAlgorithm: RSA_ECB,   
-        receiverPublicKey: serverPublicKey, 
-        senderPrivateKey: clientPrivateKey
+        symmetricKey: symmetricKey
     };
-    xml securedEnvelope = check applyUtAsymmetricBinding(utAsymmBinding);
+    
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
     string envelopeString = securedEnvelope.toBalString();
 
     byte[] signedData = check getSignatureData(securedEnvelope);
-    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithoutX509(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "symmetric_binding", "qw"]
+}
+function testSymmetricBindingPolicyWithX509SignatureOnly() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    SymmetricBindingConfig utSymmetricBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        symmetricKey: symmetricKey,
+        x509Token: X509_PUBLIC_CERT_PATH_2
+    };
+    
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithX509(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "symmetric_binding"]
+}
+function testSymmetricBindingPolicyEncryptionOnly() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    SymmetricBindingConfig utSymmetricBinding = {
+        envelope: envelope,
+        encryptionAlgorithm: RSA_ECB,
+        symmetricKey: symmetricKey
+    };
+    
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] encData = check getEncryptedData(securedEnvelope);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, publicKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
+    assertEncryptedPart(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "symmetric_binding"]
+}
+function testSymmetricBindingWithSignatureAndEncryption() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+
+    SymmetricBindingConfig utSymmetricBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        encryptionAlgorithm: RSA_ECB,
+        symmetricKey: symmetricKey
+    };
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
     test:assertTrue(validity);
 
     byte[] encData = check getEncryptedData(securedEnvelope);
-    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, publicKey);
     test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
 
     assertSignatureWithoutX509(envelopeString);
@@ -230,9 +319,9 @@ function testUsernameTokenWithAsymmetricBinding() returns error? {
 }
 
 @test:Config {
-    groups: ["username_token", "signature", "asymmetric_binding", "x509"]
+    groups: ["username_token", "signature", "symmetric_binding", "q"]
 }
-function testX509TokenWithAsymmetricBinding() returns error? {
+function testSymmetricBindingPolicyWithX509SignatureAndEncryption() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -249,42 +338,32 @@ function testX509TokenWithAsymmetricBinding() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
 
-    // generating keys
-    crypto:KeyStore serverKeyStore = {
-        path: X509_KEY_STORE_PATH,
+    crypto:KeyStore keyStore = {
+        path: KEY_STORE_PATH,
         password: KEY_PASSWORD
     };
-    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+    crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    crypto:KeyStore clientKeyStore = {
-        path: X509_KEY_STORE_PATH_2,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
-
-    X509AsymmetricBindingConfig utAsymmBinding = {
+    SymmetricBindingConfig utSymmetricBinding = {
         envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
         signatureAlgorithm: RSA_SHA256,
-        encryptionAlgorithm: RSA_ECB,   
-        receiverPublicKey: serverPublicKey, 
-        senderPrivateKey: clientPrivateKey,
+        encryptionAlgorithm: RSA_ECB,
+        symmetricKey: symmetricKey,
         x509Token: X509_PUBLIC_CERT_PATH_2
     };
-    xml securedEnvelope = check applyX509AsymmetricBinding(utAsymmBinding);
+    
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
     string envelopeString = securedEnvelope.toBalString();
-
     byte[] signedData = check getSignatureData(securedEnvelope);
-    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
     test:assertTrue(validity);
 
     byte[] encData = check getEncryptedData(securedEnvelope);
-    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, publicKey);
     test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
     assertSignatureWithX509(envelopeString);
     assertEncryptedPart(envelopeString);
 }
@@ -309,6 +388,15 @@ function testUsernameTokenWithSymmetricBinding() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
 
+    UsernameTokenConfig utRecord = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: DIGEST
+    };
+
+    envelope = check applyUsernameToken(utRecord);
+
     crypto:KeyStore keyStore = {
         path: KEY_STORE_PATH,
         password: KEY_PASSWORD
@@ -316,16 +404,13 @@ function testUsernameTokenWithSymmetricBinding() returns error? {
     crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
     crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    UtSymmetricBindingConfig utSymmetricBinding = {
+    SymmetricBindingConfig utSymmetricBinding = {
         envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
         signatureAlgorithm: RSA_SHA256,
         encryptionAlgorithm: RSA_ECB,   
         symmetricKey: symmetricKey
     };
-    xml securedEnvelope = check applyUtSymmetricBinding(utSymmetricBinding);
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
     string envelopeString = securedEnvelope.toBalString();
 
     byte[] signedData = check getSignatureData(securedEnvelope);
@@ -337,16 +422,15 @@ function testUsernameTokenWithSymmetricBinding() returns error? {
     byte[] decryptDataResult = check decryptData(encData, RSA_ECB, publicKey);
     test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
 
+    assertUsernameToken(envelopeString, DIGEST);
     assertSignatureWithoutX509(envelopeString);
     assertEncryptedPart(envelopeString);
 }
 
-
-
 @test:Config {
-    groups: ["username_token", "signature", "symmetric_binding", "x509"]
+    groups: ["username_token", "signature", "symmetric_binding"]
 }
-function testX509TokenWithSymmetricBinding() returns error? {
+function testUsernameTokenTimestampWithSymmetricBindingAndX509Token() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -363,27 +447,34 @@ function testX509TokenWithSymmetricBinding() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
 
+    UsernameTokenConfig utRecord = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: DIGEST
+    };
+
+    envelope = check applyUsernameToken(utRecord);
+    
+    envelope = check applyTimestampToken(envelope = envelope, timeToLive = 600);
+
     crypto:KeyStore keyStore = {
-        path: X509_KEY_STORE_PATH,
+        path: KEY_STORE_PATH,
         password: KEY_PASSWORD
     };
     crypto:PrivateKey symmetricKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
     crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
 
-    X509Token x509Token = check new (X509_PUBLIC_CERT_PATH);
-    X509SymmetricBindingConfig utSymmetricBinding = {
+    SymmetricBindingConfig utSymmetricBinding = {
         envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
         signatureAlgorithm: RSA_SHA256,
-        encryptionAlgorithm: RSA_ECB,   
+        encryptionAlgorithm: RSA_ECB,
         symmetricKey: symmetricKey,
-        x509Token: x509Token
+        x509Token: X509_PUBLIC_CERT_PATH_2
     };
-    xml securedEnvelope = check applyX509SymmetricBinding(utSymmetricBinding);
+    
+    xml securedEnvelope = check applySymmetricBinding(utSymmetricBinding);
     string envelopeString = securedEnvelope.toBalString();
-
     byte[] signedData = check getSignatureData(securedEnvelope);
 
     boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
@@ -393,14 +484,16 @@ function testX509TokenWithSymmetricBinding() returns error? {
     byte[] decryptDataResult = check decryptData(encData, RSA_ECB, publicKey);
     test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
 
-    assertSignatureWithX509(envelopeString);
+    assertUsernameToken(envelopeString, DIGEST);
+    assertTimestampToken(envelopeString);
+    assertSignatureWithoutX509(envelopeString);
     assertEncryptedPart(envelopeString);
 }
 
 @test:Config {
-    groups: ["username_token", "encryption", "rsa"]
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
 }
-function testUsernameTokenWithEncryptionWithRSA() returns error? {
+function testAsymmetricBindingWithSignature() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -416,209 +509,142 @@ function testUsernameTokenWithEncryptionWithRSA() returns error? {
         </soap:Envelope>`;
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
+
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
         password: KEY_PASSWORD
     };
-    crypto:PrivateKey encryptKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey decryptKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
 
-    UtEncryptionConfig utEncryption = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: DIGEST,
-        encryptionAlgorithm: RSA_ECB,
-        encryptionKey: encryptKey
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
     };
-    xml securedEnvelope = check applyUtEncryption(utEncryption);
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,  
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithoutX509(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+}
+function testAsymmetricBindingWithX509Signature() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,  
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey,
+        x509Token: X509_PUBLIC_CERT_PATH_2
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+    test:assertTrue(validity);
+
+    assertSignatureWithX509(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+}
+function testAsymmetricBindingWithEncryption() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        encryptionAlgorithm: RSA_ECB,   
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
     string envelopeString = securedEnvelope.toBalString();
 
     byte[] encData = check getEncryptedData(securedEnvelope);
-    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, decryptKey);
-    test:assertEquals(check string:fromBytes(decryptDataResult), soapBody);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
     assertEncryptedPart(envelopeString);
 }
 
 @test:Config {
-    groups: ["username_token", "signature"]
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
 }
-function testUsernameTokenWithSignatureRsaSha1() returns error? {
-    xml envelope =
-    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-            <soap:Body>
-                <person>
-                    <name>John Doe</name>
-                    <age>30</age>
-                    <address>
-                        <city>New York</city>
-                        <country>USA</country>
-                    </address>
-                </person>
-            </soap:Body>
-        </soap:Envelope>`;
-    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
-
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
-
-    UtSignatureConfig utSignature = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
-        signatureKey: signatureKey,
-        signatureAlgorithm: RSA_SHA1
-    };
-    xml securedEnvelope = check applyUtSignature(utSignature);
-    string envelopeString = securedEnvelope.toBalString();
-    byte[] signedData = check getSignatureData(securedEnvelope);
-
-    boolean validity = check crypto:verifyRsaSha1Signature(envelope.toBalString().toBytes(), signedData, publicKey);
-    test:assertTrue(validity);
-
-    assertSignatureWithoutX509(envelopeString);
-}
-
-@test:Config {
-    groups: ["username_token", "signature"]
-}
-function testUsernameTokenWithSignatureRsaSha256() returns error? {
-    xml envelope =
-    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-            <soap:Body>
-                <person>
-                    <name>John Doe</name>
-                    <age>30</age>
-                    <address>
-                        <city>New York</city>
-                        <country>USA</country>
-                    </address>
-                </person>
-            </soap:Body>
-        </soap:Envelope>`;
-    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
-
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
-
-    UtSignatureConfig utSignature = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
-        signatureKey: signatureKey,
-        signatureAlgorithm: RSA_SHA256
-    };
-    xml securedEnvelope = check applyUtSignature(utSignature);
-    string envelopeString = securedEnvelope.toBalString();
-    byte[] signedData = check getSignatureData(securedEnvelope);
-
-    boolean validity = check crypto:verifyRsaSha256Signature(envelope.toBalString().toBytes(), signedData, publicKey);
-    test:assertTrue(validity);
-
-    assertSignatureWithoutX509(envelopeString);
-}
-
-@test:Config {
-    groups: ["username_token", "signature"]
-}
-function testUsernameTokenWithSignatureRsaSha384() returns error? {
-    xml envelope =
-    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-            <soap:Body>
-                <person>
-                    <name>John Doe</name>
-                    <age>30</age>
-                    <address>
-                        <city>New York</city>
-                        <country>USA</country>
-                    </address>
-                </person>
-            </soap:Body>
-        </soap:Envelope>`;
-    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
-
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
-
-    UtSignatureConfig utSignature = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
-        signatureKey: signatureKey,
-        signatureAlgorithm: RSA_SHA384
-    };
-    xml securedEnvelope = check applyUtSignature(utSignature);
-    string envelopeString = securedEnvelope.toBalString();
-    byte[] signedData = check getSignatureData(securedEnvelope);
-
-    boolean validity = check crypto:verifyRsaSha384Signature(envelope.toBalString().toBytes(), signedData, publicKey);
-    test:assertTrue(validity);
-
-    assertSignatureWithoutX509(envelopeString);
-}
-@test:Config {
-    groups: ["username_token", "signature"]
-}
-function testUsernameTokenWithSignatureRsaSha512() returns error? {
-    xml envelope =
-    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-            <soap:Body>
-                <person>
-                    <name>John Doe</name>
-                    <age>30</age>
-                    <address>
-                        <city>New York</city>
-                        <country>USA</country>
-                    </address>
-                </person>
-            </soap:Body>
-        </soap:Envelope>`;
-    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
-
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
-        password: KEY_PASSWORD
-    };
-    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
-
-    UtSignatureConfig utSignature = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
-        signatureKey: signatureKey,
-        signatureAlgorithm: RSA_SHA512
-    };
-    xml securedEnvelope = check applyUtSignature(utSignature);
-    string envelopeString = securedEnvelope.toBalString();
-    byte[] signedData = check getSignatureData(securedEnvelope);
-
-    boolean validity = check crypto:verifyRsaSha512Signature(envelope.toBalString().toBytes(), signedData, publicKey);
-    test:assertTrue(validity);
-
-    assertSignatureWithoutX509(envelopeString);
-}
-
-@test:Config {
-    groups: ["username_token", "signature", "x509"]
-}
-function testX509TokenWithSignature() returns error? {
+function testAsymmetricBindingWithSignatureAndEncryption() returns error? {
     xml envelope =
     xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
@@ -635,29 +661,236 @@ function testX509TokenWithSignature() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     string soapBody = check getEnvelopeBody(envelope);
 
-    crypto:KeyStore keyStore = {
-        path: KEY_STORE_PATH,
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
         password: KEY_PASSWORD
     };
-    crypto:PrivateKey signatureKey = check crypto:decodeRsaPrivateKeyFromKeyStore(keyStore, KEY_ALIAS, KEY_PASSWORD);
-    crypto:PublicKey publicKey = check crypto:decodeRsaPublicKeyFromTrustStore(keyStore, KEY_ALIAS);
+    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
 
-    X509SignatureConfig utSignature = {
-        envelope: envelope,
-        username: USERNAME,
-        password: PASSWORD,
-        passwordType: TEXT,
-        signatureKey: signatureKey,
-        signatureAlgorithm: RSA_SHA256,
-        x509Token: X509_PUBLIC_CERT_PATH
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
     };
-    xml securedEnvelope = check applyX509Signature(utSignature);
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        encryptionAlgorithm: RSA_ECB,   
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
     string envelopeString = securedEnvelope.toBalString();
 
     byte[] signedData = check getSignatureData(securedEnvelope);
-
-    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, publicKey);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
     test:assertTrue(validity);
 
+    byte[] encData = check getEncryptedData(securedEnvelope);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
+    assertSignatureWithoutX509(envelopeString);
+    assertEncryptedPart(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+}
+function testAsymmetricBindingWithX509SignatureAndEncryption() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        encryptionAlgorithm: RSA_ECB,   
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey,
+        x509Token: X509_PUBLIC_CERT_PATH_2
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+    test:assertTrue(validity);
+
+    byte[] encData = check getEncryptedData(securedEnvelope);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
     assertSignatureWithX509(envelopeString);
+    assertEncryptedPart(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+}
+function testUsernameTokenWithAsymmetricBindingAndX509() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    UsernameTokenConfig utRecord = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: DIGEST
+    };
+
+    envelope = check applyUsernameToken(utRecord);
+    
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        encryptionAlgorithm: RSA_ECB,   
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey,
+        x509Token: X509_PUBLIC_CERT_PATH_2
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+    test:assertTrue(validity);
+
+    byte[] encData = check getEncryptedData(securedEnvelope);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
+    assertUsernameToken(envelopeString, DIGEST);
+    assertSignatureWithX509(envelopeString);
+    assertEncryptedPart(envelopeString);
+}
+
+@test:Config {
+    groups: ["username_token", "signature", "asymmetric_binding", "n"]
+}
+function testUsernameTokenTimestampWithAsymmetricBindingAndX509() returns error? {
+    xml envelope =
+    xml `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <person>
+                    <name>John Doe</name>
+                    <age>30</age>
+                    <address>
+                        <city>New York</city>
+                        <country>USA</country>
+                    </address>
+                </person>
+            </soap:Body>
+        </soap:Envelope>`;
+    xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
+    string soapBody = check getEnvelopeBody(envelope);
+
+    UsernameTokenConfig utRecord = {
+        envelope: envelope,
+        username: USERNAME,
+        password: PASSWORD,
+        passwordType: DIGEST
+    };
+
+    envelope = check applyUsernameToken(utRecord);
+    
+    envelope = check applyTimestampToken(envelope = envelope, timeToLive = 600);
+    
+    // generating keys
+    crypto:KeyStore serverKeyStore = {
+        path: X509_KEY_STORE_PATH,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey serverPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(serverKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey serverPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(serverKeyStore, KEY_ALIAS);
+
+    crypto:KeyStore clientKeyStore = {
+        path: X509_KEY_STORE_PATH_2,
+        password: KEY_PASSWORD
+    };
+    crypto:PrivateKey clientPrivateKey = check crypto:decodeRsaPrivateKeyFromKeyStore(clientKeyStore, KEY_ALIAS, KEY_PASSWORD);
+    crypto:PublicKey clientPublicKey = check crypto:decodeRsaPublicKeyFromTrustStore(clientKeyStore, KEY_ALIAS);
+
+    AsymmetricBindingConfig utAsymmBinding = {
+        envelope: envelope,
+        signatureAlgorithm: RSA_SHA256,
+        encryptionAlgorithm: RSA_ECB,   
+        receiverPublicKey: serverPublicKey, 
+        senderPrivateKey: clientPrivateKey,
+        x509Token: X509_PUBLIC_CERT_PATH_2
+    };
+    xml securedEnvelope = check applyAsymmetricBinding(utAsymmBinding);
+    string envelopeString = securedEnvelope.toBalString();
+
+    byte[] signedData = check getSignatureData(securedEnvelope);
+    boolean validity = check crypto:verifyRsaSha256Signature(soapBody.toBytes(), signedData, clientPublicKey);
+    test:assertTrue(validity);
+
+    byte[] encData = check getEncryptedData(securedEnvelope);
+    byte[] decryptDataResult = check decryptData(encData, RSA_ECB, serverPrivateKey);
+    test:assertEquals(soapBody, check string:fromBytes(decryptDataResult));
+
+    assertUsernameToken(envelopeString, DIGEST);
+    assertTimestampToken(envelopeString);
+    assertSignatureWithX509(envelopeString);
+    assertEncryptedPart(envelopeString);
 }

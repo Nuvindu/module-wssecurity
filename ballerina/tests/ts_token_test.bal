@@ -37,12 +37,7 @@ function testTimestampToken() returns error? {
     xmlns "http://schemas.xmlsoap.org/soap/envelope/" as soap;
     xml securedEnvelope = check applyTimestampToken(envelope = envelope, timeToLive = 600);
     string envelopeString = (securedEnvelope/<soap:Header>/*).toBalString();
-    string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
-    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
-    string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
-    test:assertTrue(envelopeString.includesMatch(ts_token));
-    test:assertTrue(envelopeString.includesMatch(created));
-    test:assertTrue(envelopeString.includesMatch(expires));
+    assertTimestampToken(envelopeString);
 }
 
 @test:Config {
