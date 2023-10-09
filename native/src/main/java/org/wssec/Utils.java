@@ -28,6 +28,7 @@ public class Utils {
     }
 
     public static final String ERROR_TYPE = "Error";
+    public static final String POLICY_NOT_SUPPORTED_ERROR = "Given ws security policy is currently not supported";
 
     public static BError createError(String message) {
         return ErrorCreator.createError(getModule(), ERROR_TYPE,

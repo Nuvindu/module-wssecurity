@@ -36,6 +36,7 @@ import static org.wssec.Constants.X509;
 import static org.wssec.Utils.createError;
 
 public class X509SecToken  {
+
     private final Crypto crypto;
     private final X509Certificate x509Certificate;
 
@@ -67,5 +68,4 @@ public class X509SecToken  {
     protected Crypto getCryptoProperties() {
         return this.crypto;
     }
-
 }

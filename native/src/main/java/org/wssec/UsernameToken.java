@@ -53,17 +53,15 @@ import static org.wssec.Constants.NATIVE_UT;
 import static org.wssec.Constants.NONE;
 import static org.wssec.Constants.SIGNATURE;
 import static org.wssec.Constants.SIGN_AND_ENCRYPT;
+import static org.wssec.Utils.POLICY_NOT_SUPPORTED_ERROR;
 import static org.wssec.Utils.createError;
 
 public class UsernameToken {
 
     private final WSSecUsernameToken usernameToken;
-
     private String username;
     private String password;
     private String passwordType;
-    private final String signAlgo;
-    private final String encAlgo;
     private final Document document;
     private X509SecToken x509SecToken = null;
 
@@ -71,19 +69,11 @@ public class UsernameToken {
         return document;
     }
 
-    public UsernameToken(BObject wsSecurityHeader, BString signatureAlgo, BString encryptionAlgo) {
+    public UsernameToken(BObject wsSecurityHeader) {
         BHandle handle = (BHandle) wsSecurityHeader.get(StringUtils.fromString(NATIVE_SEC_HEADER));
         WSSecurityHeader securityHeader = (WSSecurityHeader) handle.getValue();
         this.usernameToken = new WSSecUsernameToken(securityHeader.getWsSecHeader());
-        this.signAlgo = signatureAlgo.getValue();
-        this.encAlgo = encryptionAlgo.getValue();
         this.document = securityHeader.getDocument();
-    }
-
-    public static void setUsername(BObject userToken, BString username) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
-        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
-        usernameTokenObj.setUsername(username.getValue());
     }
 
     public static void setPassword(BObject userToken, BString password) {
@@ -92,50 +82,36 @@ public class UsernameToken {
         usernameTokenObj.setPassword(password.getValue());
     }
 
-    public static void setPasswordType(BObject userToken, BString passwordType) {
-        BHandle handle = (BHandle) userToken.get(StringUtils.fromString(NATIVE_UT));
-        UsernameToken usernameTokenObj = (UsernameToken) handle.getValue();
-        usernameTokenObj.setPasswordType(passwordType.getValue());
+    protected String getPassword() {
+        return password;
     }
 
-    protected String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    protected void setUsername(String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
-    protected String getPassword() {
-        return password;
+    public String getPasswordType() {
+        return passwordType;
+    }
+
+    public void setPasswordType(String passwordType) {
+        this.passwordType = passwordType;
     }
 
     protected void setPassword(String password) {
         this.password = password;
     }
 
-    protected String getPasswordType() {
-        return passwordType;
-    }
-
-    protected void setPasswordType(String passwordType) {
-        this.passwordType = passwordType;
-    }
-
     protected WSSecUsernameToken getUsernameToken() {
         return usernameToken;
     }
 
-    public String getSignAlgo() {
-        return signAlgo;
-    }
-
-    public String getEncAlgo() {
-        return encAlgo;
-    }
-
     protected void setX509Token(X509SecToken x509SecToken) {
-        this.x509SecToken =  x509SecToken;
+        this.x509SecToken = x509SecToken;
     }
 
     public X509SecToken getX509SecToken() {
@@ -178,7 +154,7 @@ public class UsernameToken {
                 case NONE -> {
                     setUTChildElements(usernameToken, pwType.getValue(), username.getValue(), password.getValue());
                     switch (pwType.getValue()) {
-                        case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST ->  {
+                        case DERIVED_KEY_TEXT, DERIVED_KEY_DIGEST -> {
                             usernameToken.addDerivedKey(Constants.ITERATION);
                             xmlDocument = usernameToken.build(UsernameTokenUtil.generateSalt(true));
                         }
@@ -189,24 +165,28 @@ public class UsernameToken {
                     xmlDocument = createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue(),
+                                                      signature.getSignatureAlgorithm());
                 }
                 case ENCRYPT -> {
                     setUTChildElements(usernameToken, DIGEST, username.getValue(), password.getValue());
                     usernameToken.build();
-                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
+                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, salt);
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData(),
+                                                     encryption.getEncryptionAlgorithm());
                 }
                 case SIGN_AND_ENCRYPT -> {
                     createSignatureTags(usernameTokenObj, username.getValue(), password.getValue(),
                             pwType.getValue(), salt, pwType.getValue().equals(DERIVED_KEY_TEXT)
                                     || pwType.getValue().equals(DERIVED_KEY_DIGEST));
-                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, usernameTokenObj.getEncAlgo(), salt);
-                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData());
-                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue());
+                    xmlDocument = WSSecurityUtils.encryptEnvelope(usernameToken, salt);
+                    WSSecurityUtils.setEncryptedData(xmlDocument, encryption.getEncryptedData(),
+                                                     encryption.getEncryptionAlgorithm());
+                    WSSecurityUtils.setSignatureValue(xmlDocument, signature.getSignatureValue(),
+                                                      signature.getSignatureAlgorithm());
                 }
                 default -> {
-                    return createError("Given ws security policy is currently not supported");
+                    return createError(POLICY_NOT_SUPPORTED_ERROR);
                 }
             }
             return convertDocumentToString(xmlDocument);
@@ -225,9 +205,8 @@ public class UsernameToken {
         reqData.setWsDocInfo(new WSDocInfo(usernameTokenObj.getDocument()));
         setUTChildElements(usernameToken, passwordType, username, password);
         usernameToken.prepare(salt);
-        WSSecurityUtils.buildSignature(reqData,
-                    WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
-                                                     usernameTokenObj.getSignAlgo(), useDerivedKey));
+        WSSecurityUtils.buildSignature(reqData, WSSecurityUtils.prepareSignature(reqData, usernameTokenObj,
+                                       useDerivedKey));
         return usernameToken.build(salt);
     }
 

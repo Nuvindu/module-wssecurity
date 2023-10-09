@@ -16,7 +16,7 @@
 
 import ballerina/jballerina.java;
 
-public class X509Token {
+class X509Token {
     *Token;
     private handle nativeX509Token;
 
@@ -25,7 +25,7 @@ public class X509Token {
         self.nativeX509Token = check newX509Token(filePath);
     }
 
-    public function addX509Token(UsernameToken usernameToken) = @java:Method {
+    function addX509Token(UsernameToken usernameToken) = @java:Method {
         'class: "org.wssec.X509SecToken"
     } external;
 }

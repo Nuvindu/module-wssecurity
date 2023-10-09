@@ -17,12 +17,17 @@
 package org.wssec;
 
 public class Constants {
+
     public static final int ITERATION = 1000;
     public static final String NONE = "NONE";
     public static final String DIGEST = "DIGEST";
     public static final String SIGNATURE = "SIGNATURE";
     public static final String ENCRYPT = "ENCRYPT";
     public static final String SIGN_AND_ENCRYPT = "SIGN_AND_ENCRYPT";
+    public static final String TIMESTAMP_TOKEN = "TIMESTAMP_TOKEN";
+    public static final String USERNAME_TOKEN = "USERNAME_TOKEN";
+    public static final String SYMMETRIC_BINDING = "SYMMETRIC_BINDING";
+    public static final String ASYMMETRIC_BINDING = "ASYMMETRIC_BINDING";
     public static final String DERIVED_KEY_TEXT = "DERIVED_KEY_TEXT";
     public static final String DERIVED_KEY_DIGEST = "DERIVED_KEY_DIGEST";
     public static final String NATIVE_SEC_HEADER = "nativeSecHeader";
@@ -34,6 +39,8 @@ public class Constants {
     public static final String NATIVE_ENCRYPTION = "nativeEncryption";
     public static final String SOAP_BODY_TAG = "soap:Body";
     public static final String SIGNATURE_VALUE_TAG = "ds:SignatureValue";
+    public static final String SIGNATURE_METHOD_TAG = "ds:SignatureMethod";
+    public static final String ENCRYPTION_METHOD_TAG = "xenc:EncryptionMethod";
     public static final String NAMESPACE_URI_ENC = "http://www.w3.org/2001/04/xmlenc#";
     public static final String CIPHER_VALUE_TAG = "CipherValue";
     public static final String X509 = "X.509";

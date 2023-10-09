@@ -13,12 +13,13 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/jballerina.java;
 
-public class Document {
+class Document {
     private handle nativeDocumentBuilder;
 
-    public function init(string xmlPayload) returns Error? {
+    public function init(xml xmlPayload) returns Error? {
         self.nativeDocumentBuilder = check newDocument(xmlPayload);
     }
 
@@ -29,8 +30,16 @@ public class Document {
     public function getEnvelopeBody() returns string|Error = @java:Method {
         'class: "org.wssec.DocumentBuilder"
     } external;
+
+    public function getEncryptedData() returns byte[] = @java:Method {
+        'class: "org.wssec.DocumentBuilder"
+    } external;
+
+    public function getSignatureData() returns byte[] = @java:Method {
+        'class: "org.wssec.DocumentBuilder"
+    } external;
 }
 
-function newDocument(string xmlPayload) returns handle|Error = @java:Constructor {
+function newDocument(xml xmlPayload) returns handle|Error = @java:Constructor {
     'class: "org.wssec.DocumentBuilder"
 } external;

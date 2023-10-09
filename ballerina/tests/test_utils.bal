@@ -24,12 +24,46 @@ const string KEY_PASSWORD = "security";
 
 const string PUBLIC_KEY_PATH = "tests/resources/public_key.cer";
 const string PRIVATE_KEY_PATH = "tests/resources/private_key.pem";
-const string KEY_STORE_PATH = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/keys/wss40.p12";
+const string KEY_STORE_PATH = "tests/resources/wss40.p12";
 const string X509_PUBLIC_CERT_PATH = "tests/resources/x509_certificate.crt";
 const string X509_PUBLIC_CERT_PATH_2 = "tests/resources/x509_certificate_2.crt";
-const string X509_KEY_STORE_PATH = "/Users/nuvindu/Ballerina/soap/module-wssecurity/native/src/main/resources/x509_certificate.p12";
-const string X509_KEY_STORE_PATH_2 = "/Users/nuvindu/Ballerina/soap/module-wssecurity/ballerina/tests/resources/x509_certificate_2.p12";
+const string X509_KEY_STORE_PATH = "tests/resources/x509_certificate.p12";
+const string X509_KEY_STORE_PATH_2 = "tests/resources/x509_certificate_2.p12";
 
+function assertTimestampToken(string envelopeString) {
+    string:RegExp ts_token = re `<wsu:Timestamp wsu:Id=".*">`;
+    string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
+    string:RegExp expires = re `<wsu:Expires>.*</wsu:Expires>`;
+    test:assertTrue(envelopeString.includesMatch(ts_token));
+    test:assertTrue(envelopeString.includesMatch(created));
+    test:assertTrue(envelopeString.includesMatch(expires));
+}
+function assertUsernameToken(string envelopeString, PasswordType passwordType) {
+    string:RegExp usernameTokenTag = re `<wsse:UsernameToken .*>.*</wsse:UsernameToken>`;
+    string:RegExp usernameTag = re `<wsse:Username>${USERNAME}</wsse:Username>`;
+    test:assertTrue(envelopeString.includesMatch(usernameTokenTag));
+    test:assertTrue(envelopeString.includesMatch(usernameTag));
+    match passwordType {
+        TEXT => {
+            string:RegExp passwordTag = re `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${PASSWORD}</wsse:Password>`;
+            test:assertTrue(envelopeString.includesMatch(passwordTag));
+        }
+        DIGEST => {
+            string:RegExp passwordTag = re `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">.*</wsse:Password>`;
+            string:RegExp nonce = re `<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">.*</wsse:Nonce>`;
+            string:RegExp created = re `<wsu:Created>.*</wsu:Created>`;
+            test:assertTrue(envelopeString.includesMatch(passwordTag));
+            test:assertTrue(envelopeString.includesMatch(nonce));
+            test:assertTrue(envelopeString.includesMatch(created));
+        }
+        _ => {
+            string:RegExp salt = re `<wsse11:Salt>.*</wsse11:Salt>`;
+            string:RegExp iteration = re `<wsse11:Iteration>.*</wsse11:Iteration>`;
+            test:assertTrue(envelopeString.includesMatch(salt));
+            test:assertTrue(envelopeString.includesMatch(iteration));
+        }
+    }
+}
 function assertSignatureWithX509(string securedEnvelope) {
     string:RegExp keyIdentifier = re `<wsse:KeyIdentifier EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3">.*</wsse:KeyIdentifier>`;
     test:assertTrue(securedEnvelope.includesMatch(keyIdentifier));

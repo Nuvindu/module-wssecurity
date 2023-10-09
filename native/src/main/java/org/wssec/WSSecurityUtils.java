@@ -36,40 +36,36 @@ import java.util.List;
 
 import javax.xml.crypto.dsig.Reference;
 
+import static org.apache.wss4j.common.WSS4JConstants.AES_128_GCM;
+import static org.apache.wss4j.common.WSS4JConstants.HMAC_SHA1;
 import static org.apache.wss4j.dom.WSConstants.CUSTOM_KEY_IDENTIFIER;
 import static org.apache.wss4j.dom.WSConstants.X509_KEY_IDENTIFIER;
 import static org.wssec.Constants.CIPHER_VALUE_TAG;
+import static org.wssec.Constants.ENCRYPTION_METHOD_TAG;
 import static org.wssec.Constants.ITERATION;
 import static org.wssec.Constants.NAMESPACE_URI_ENC;
+import static org.wssec.Constants.SIGNATURE_METHOD_TAG;
 import static org.wssec.Constants.SIGNATURE_VALUE_TAG;
 
 public class WSSecurityUtils {
 
-    public static Document encryptEnvelope(WSSecUsernameToken usernameToken, String encAlgo,
+    public static Document encryptEnvelope(WSSecUsernameToken usernameToken,
                                            byte[] rawKey) throws WSSecurityException {
         Init.init();
         JCEMapper.registerDefaultAlgorithms();
         WSSecDKEncrypt encryptionBuilder = new WSSecDKEncrypt(usernameToken.getSecurityHeader());
-        encryptionBuilder.setSymmetricEncAlgorithm(encAlgo);
+        encryptionBuilder.setSymmetricEncAlgorithm(AES_128_GCM);
         return encryptionBuilder.build(rawKey);
     }
 
     public static WSSecSignature prepareSignature(RequestData reqData, UsernameToken usernameToken,
-                                                  String algorithm, boolean useDerivedKey) throws WSSecurityException {
+                                                  boolean useDerivedKey) throws WSSecurityException {
         WSSecSignature sign = new WSSecSignature(reqData.getSecHeader());
-        sign.setIdAllocator(reqData.getWssConfig().getIdAllocator());
-        sign.setAddInclusivePrefixes(reqData.isAddInclusivePrefixes());
-        sign.setCustomTokenId(usernameToken.getUsernameToken().getId());
-        byte[] salt = UsernameTokenUtil.generateSalt(true);
-        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(), salt, ITERATION);
-        if (useDerivedKey) {
-            usernameToken.getUsernameToken().addDerivedKey(ITERATION);
-            sign.setSecretKey(key);
-        } else {
-            sign.setSecretKey(key);
-        }
+        byte[] key = UsernameTokenUtil.generateDerivedKey(usernameToken.getPassword(),
+                                                          UsernameTokenUtil.generateSalt(true), ITERATION);
+        sign.setSecretKey(key);
         sign.setWsDocInfo(reqData.getWsDocInfo());
-        sign.setSignatureAlgorithm(algorithm);
+        sign.setSignatureAlgorithm(HMAC_SHA1);
         if (usernameToken.getX509SecToken() != null) {
             sign.setKeyIdentifierType(X509_KEY_IDENTIFIER);
             sign.setX509Certificate(usernameToken.getX509SecToken().getX509Certificate());
@@ -90,28 +86,30 @@ public class WSSecurityUtils {
         reqData.getSignatureValues().add(sign.getSignatureValue());
     }
 
-    public static void setSignatureValue(Document doc, byte[] signature) {
+    public static void setSignatureValue(Document doc, byte[] signature, String algorithm) {
+        doc.getElementsByTagName(SIGNATURE_METHOD_TAG)
+                .item(0).getAttributes().item(0).setNodeValue(algorithm);
         NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
         digestValueList.item(0).getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(signature));
     }
 
     public static byte[] getSignatureValue(Document doc) {
-        NodeList digestValueList = doc.getElementsByTagName(SIGNATURE_VALUE_TAG);
-        String encryptedText = digestValueList.item(0).getFirstChild().getNodeValue();
-        return Base64.getDecoder().decode(encryptedText);
+        String signature = doc.getElementsByTagName(SIGNATURE_VALUE_TAG).item(0).getFirstChild().getNodeValue();
+        return Base64.getDecoder().decode(signature);
     }
 
-    public static void setEncryptedData(Document doc, byte[] encryptedData) {
-
+    public static void setEncryptedData(Document doc, byte[] encryptedData, String algorithm) {
         Element cipherDataElement = (Element) doc
                 .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
         cipherDataElement.getFirstChild().setNodeValue(Base64.getEncoder().encodeToString(encryptedData));
+        doc.getElementsByTagName(ENCRYPTION_METHOD_TAG).item(0).getAttributes().item(0)
+                .setNodeValue(algorithm);
     }
 
-    public static byte[] getEncryptedData(Document doc) {
-        Element cipherDataElement = (Element) doc
-                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0);
-        String encryptedText = cipherDataElement.getFirstChild().getNodeValue();
+    public static byte[] getEncryptedData(Document document) {
+        String encryptedText = document
+                .getElementsByTagNameNS(NAMESPACE_URI_ENC, CIPHER_VALUE_TAG).item(0)
+                .getFirstChild().getNodeValue();
         return Base64.getDecoder().decode(encryptedText);
     }
 }

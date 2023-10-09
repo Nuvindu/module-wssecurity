@@ -16,11 +16,11 @@
 
 import ballerina/jballerina.java;
 
-public class TimestampToken {
+class TimestampToken {
     *Token;
     private handle nativeTimestampToken;
 
-    public function init(WSSecurityHeader wsSecHeader, int timeToLive) {
+    function init(WSSecurityHeader wsSecHeader, int timeToLive) {
         self.'type = TIMESTAMP_TOKEN;
         self.nativeTimestampToken = newTimestamp(wsSecHeader, timeToLive);
     }

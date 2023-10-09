@@ -14,22 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.wssec;
+import ballerina/jballerina.java;
 
-import io.ballerina.runtime.api.Environment;
-import io.ballerina.runtime.api.Module;
-
-public class ModuleUtils {
-
-    private static Module module;
-
-    private ModuleUtils() {}
-
-    public static void setModule(Environment environment) {
-        module = environment.getCurrentModule();
-    }
-
-    public static Module getModule() {
-        return module;
-    }
+isolated function init() {
+    setModule();
 }
+
+isolated function setModule() = @java:Method {
+    'class: "org.wssec.ModuleUtils"
+} external;

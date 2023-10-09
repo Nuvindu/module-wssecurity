@@ -16,27 +16,29 @@
 
 import ballerina/jballerina.java;
 
-public class UsernameToken {
+class UsernameToken {
     *Token;
     private handle nativeUT;
-    private SignatureAlgorithm signatureAlgorithm = HMAC_SHA1;
-    private EncryptionAlgorithm encryptionAlgorithm = AES_128_GCM;
     private string username;
     private string password;
-    private string passwordType;
+    private PasswordType passwordType;
+    private AuthType authType = NONE;
 
-    public function init(WSSecurityHeader wsSecHeader, string username, string password, string passwordType) {
+    function init(WSSecurityHeader wsSecHeader, string username, string password, PasswordType passwordType) {
         self.'type = USERNAME_TOKEN;
         self.username = username;
         self.password = password;
         self.passwordType = passwordType;
-        self.nativeUT = newToken(wsSecHeader, self.signatureAlgorithm, self.encryptionAlgorithm);
+        self.nativeUT = newToken(wsSecHeader);
         self.setPassword(password);
     }
 
+    public function setAuthType(AuthType authType) {
+        self.authType = authType;
+    }
 
-    public function setSignatureAlgorithm(SignatureAlgorithm signatureAlgorithm) {
-        self.signatureAlgorithm = signatureAlgorithm;
+    public function getAuthType() returns AuthType {
+        return self.authType;
     }
 
     public function getUsername() returns string {
@@ -50,17 +52,10 @@ public class UsernameToken {
     public function getPasswordType() returns string {
         return self.passwordType;
     }
-
-    public function setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-        self.encryptionAlgorithm = encryptionAlgorithm;
-    }
-
-    public function getEncryptionAlgorithm() returns EncryptionAlgorithm {
-        return self.encryptionAlgorithm;
-    }
-    public function populateHeaderData(string username, string password, string pwType,
-                                       Encryption encData, Signature signValue, AuthType authType = NONE)
-                                       returns string|Error = @java:Method {
+    
+    function populateHeaderData(string username, string password, string pwType,
+                                Encryption encData, Signature signValue, AuthType authType = NONE)
+        returns string|Error = @java:Method {
         'class: "org.wssec.UsernameToken"
     } external;
 
@@ -77,7 +72,7 @@ public class UsernameToken {
     } external;
 }
 
-function newToken(WSSecurityHeader wsSecHeader, string signatureAlgorithm, string encryptionAlgorithm) 
+function newToken(WSSecurityHeader wsSecHeader) 
     returns handle = @java:Constructor {
     'class: "org.wssec.UsernameToken"
 } external;

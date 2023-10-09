@@ -16,14 +16,14 @@
 
 import ballerina/jballerina.java;
 
-public class WSSecurityHeader {
+class WSSecurityHeader {
     private handle nativeSecHeader;
 
-    public function init(Document document) returns Error? {
+    function init(Document document) returns Error? {
         self.nativeSecHeader = newSecHeader(document);
     }
 
-    public function insertSecHeader() returns Error? = @java:Method {
+    function insertSecHeader() returns Error? = @java:Method {
         'class: "org.wssec.WSSecurityHeader"
     } external;
 }
